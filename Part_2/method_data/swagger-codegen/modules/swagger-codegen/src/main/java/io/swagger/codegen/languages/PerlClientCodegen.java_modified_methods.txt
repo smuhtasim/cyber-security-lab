@@ -1,0 +1,39 @@
+Method: toOperationId
+VULNERABLE VERSION:
+
+    public String toOperationId(String operationId) {
+        //rename to empty_function_name_1 (e.g.) if method name is empty
+        if (StringUtils.isEmpty(operationId)) {
+            operationId = underscore("empty_function_name_" + emptyFunctionNameCounter++);
+            LOGGER.warn("Empty method name (operationId) found. Renamed to " + operationId);
+            return operationId;
+        }
+
+        // method name cannot use reserved keyword, e.g. return
+        if (isReservedWord(operationId)) {
+            LOGGER.warn(operationId + " (reserved word) cannot be used as method name. Renamed to " + underscore("call_" + operationId));
+            return underscore("call_" + operationId);
+        }
+
+        return underscore(operationId);
+    }
+FIXED VERSION:
+
+    public String toOperationId(String operationId) {
+        //rename to empty_function_name_1 (e.g.) if method name is empty
+        if (StringUtils.isEmpty(operationId)) {
+            operationId = underscore("empty_function_name_" + emptyFunctionNameCounter++);
+            LOGGER.warn("Empty method name (operationId) found. Renamed to " + operationId);
+            return operationId;
+        }
+
+        // method name cannot use reserved keyword, e.g. return
+        if (isReservedWord(operationId)) {
+            LOGGER.warn(operationId + " (reserved word) cannot be used as method name. Renamed to " + underscore("call_" + operationId));
+            return underscore("call_" + operationId);
+        }
+
+        //return underscore(operationId).replaceAll("[^A-Za-z0-9_]", "");
+        return underscore(sanitizeName(operationId));
+    }
+================================================================================

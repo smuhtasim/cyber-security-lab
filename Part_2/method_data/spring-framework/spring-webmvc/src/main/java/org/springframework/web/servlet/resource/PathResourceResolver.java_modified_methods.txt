@@ -1,0 +1,15 @@
+Method: shouldEncodeRelativePath
+VULNERABLE VERSION:
+
+
+	private boolean shouldEncodeRelativePath(Resource location) {
+		return location instanceof UrlResource &&
+				this.urlPathHelper != null && this.urlPathHelper.isUrlDecode();
+	}
+FIXED VERSION:
+
+
+	private boolean shouldEncodeRelativePath(Resource location) {
+		return (location instanceof UrlResource && this.urlPathHelper != null && this.urlPathHelper.isUrlDecode());
+	}
+================================================================================

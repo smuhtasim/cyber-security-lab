@@ -1,0 +1,62 @@
+Method: interpolateCredHubReferences_whenAReferencedCredentialDoesNotExist_itThrowsAnException
+VULNERABLE VERSION:
+
+  public void interpolateCredHubReferences_whenAReferencedCredentialDoesNotExist_itThrowsAnException() {
+    String inputJsonString = "{"
+        + "  \"pp-config-server\": ["
+        + "    {"
+        + "      \"credentials\": {"
+        + "        \"credhub-ref\": \"((/missing_cred))\""
+        + "      },"
+        + "      \"label\": \"pp-config-server\""
+        + "    }"
+        + "  ]"
+        + "}";
+    Map<String, Object> inputJson = deserialize(inputJsonString, Map.class);
+
+    doReturn(
+        null
+    ).when(credentialDataService).findMostRecent("/missing_cred");
+
+    try {
+      subject.interpolateCredHubReferences(inputJson, eventAuditRecordParameters);
+    } catch (ParameterizedValidationException exception) {
+      assertThat(exception.getMessage(), equalTo("error.interpolation.invalid_access"));
+
+      assertThat(eventAuditRecordParameters, hasSize(1));
+      assertThat(eventAuditRecordParameters, contains(
+          samePropertyValuesAs(new EventAuditRecordParameters(CREDENTIAL_ACCESS, "/missing_cred"))
+      ));
+    }
+  }
+FIXED VERSION:
+
+  public void interpolateCredHubReferences_whenAReferencedCredentialDoesNotExist_itThrowsAnException() {
+    String inputJsonString = "{"
+        + "  \"pp-config-server\": ["
+        + "    {"
+        + "      \"credentials\": {"
+        + "        \"credhub-ref\": \"((/missing_cred))\""
+        + "      },"
+        + "      \"label\": \"pp-config-server\""
+        + "    }"
+        + "  ]"
+        + "}";
+    Map<String, Object> inputJson = deserialize(inputJsonString, Map.class);
+
+    doReturn(
+        null
+    ).when(credentialDataService).findMostRecent("/missing_cred");
+
+    try {
+      subject.interpolateCredHubReferences(inputJson, eventAuditRecordParameters);
+    } catch (ParameterizedValidationException exception) {
+      assertThat(exception.getMessage(), equalTo("error.credential.invalid_access"));
+
+      assertThat(eventAuditRecordParameters, hasSize(1));
+      assertThat(eventAuditRecordParameters, contains(
+          samePropertyValuesAs(new EventAuditRecordParameters(CREDENTIAL_ACCESS, "/missing_cred"))
+      ));
+    }
+  }
+================================================================================

@@ -1,0 +1,80 @@
+Method: ConstrainedExecutable
+VULNERABLE VERSION:
+
+	public ConstrainedExecutable(
+			ConfigurationSource source,
+			ConstraintLocation location,
+			List<ConstrainedParameter> parameterMetaData,
+			Set<MetaConstraint<?>> crossParameterConstraints,
+			Set<MetaConstraint<?>> returnValueConstraints,
+			Map<Class<?>, Class<?>> groupConversions,
+			boolean isCascading,
+			boolean requiresUnwrapping) {
+		super(
+				source,
+				( location.getMember() instanceof Constructor ) ? ConstrainedElementKind.CONSTRUCTOR : ConstrainedElementKind.METHOD,
+				location,
+				returnValueConstraints,
+				groupConversions,
+				isCascading,
+				requiresUnwrapping
+		);
+
+		this.executable = ( location.getMember() instanceof Method ) ?
+				ExecutableElement.forMethod( (Method) location.getMember() ) :
+				ExecutableElement.forConstructor( (Constructor<?>) location.getMember() );
+
+		if ( parameterMetaData.size() != executable.getParameterTypes().length ) {
+			throw log.getInvalidLengthOfParameterMetaDataListException(
+					executable.getAsString(),
+					executable.getParameterTypes().length,
+					parameterMetaData.size()
+			);
+		}
+
+		this.crossParameterConstraints = crossParameterConstraints;
+		this.parameterMetaData = Collections.unmodifiableList( parameterMetaData );
+		this.hasParameterConstraints = hasParameterConstraints( parameterMetaData ) || !crossParameterConstraints.isEmpty();
+
+		if ( isConstrained() ) {
+			run( SetAccessibility.action( location.getMember() ) );
+		}
+	}
+FIXED VERSION:
+
+	public ConstrainedExecutable(
+			ConfigurationSource source,
+			ConstraintLocation location,
+			List<ConstrainedParameter> parameterMetaData,
+			Set<MetaConstraint<?>> crossParameterConstraints,
+			Set<MetaConstraint<?>> returnValueConstraints,
+			Map<Class<?>, Class<?>> groupConversions,
+			boolean isCascading,
+			boolean requiresUnwrapping) {
+		super(
+				source,
+				( location.getMember() instanceof Constructor ) ? ConstrainedElementKind.CONSTRUCTOR : ConstrainedElementKind.METHOD,
+				location,
+				returnValueConstraints,
+				groupConversions,
+				isCascading,
+				requiresUnwrapping
+		);
+
+		this.executable = ( location.getMember() instanceof Method ) ?
+				ExecutableElement.forMethod( (Method) location.getMember() ) :
+				ExecutableElement.forConstructor( (Constructor<?>) location.getMember() );
+
+		if ( parameterMetaData.size() != executable.getParameterTypes().length ) {
+			throw log.getInvalidLengthOfParameterMetaDataListException(
+					executable.getAsString(),
+					executable.getParameterTypes().length,
+					parameterMetaData.size()
+			);
+		}
+
+		this.crossParameterConstraints = crossParameterConstraints;
+		this.parameterMetaData = Collections.unmodifiableList( parameterMetaData );
+		this.hasParameterConstraints = hasParameterConstraints( parameterMetaData ) || !crossParameterConstraints.isEmpty();
+	}
+================================================================================

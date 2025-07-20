@@ -1,0 +1,19 @@
+Method: getSessionAttributeNameFilter
+VULNERABLE VERSION:
+
+
+    public String getSessionAttributeNameFilter() {
+        if (sessionAttributeNamePattern == null) {
+            return null;
+        }
+        return sessionAttributeNamePattern.toString();
+    }
+FIXED VERSION:
+
+    public String getSessionAttributeNameFilter() {
+        if (sessionAttributeNamePattern == null) {
+            return null;
+        }
+        return sessionAttributeNamePattern.toString();
+    }
+================================================================================

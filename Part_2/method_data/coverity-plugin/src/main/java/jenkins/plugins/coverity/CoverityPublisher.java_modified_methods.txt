@@ -1,0 +1,21 @@
+Method: doCheckInstance
+VULNERABLE VERSION:
+
+        public FormValidation doCheckInstance(@QueryParameter String host, @QueryParameter int port,
+                                              @QueryParameter String user, @QueryParameter String password,
+                                              @QueryParameter boolean useSSL, @QueryParameter String credentialId) {
+            CIMInstance instance = new CIMInstance("", host, port, credentialId);
+            instance.setUser(user);
+            instance.setPassword(password);
+            instance.setUseSSL(useSSL);
+            return instance.doCheck();
+        }
+FIXED VERSION:
+
+        public FormValidation doCheckInstance(@QueryParameter String host, @QueryParameter int port,
+                                              @QueryParameter boolean useSSL, @QueryParameter String credentialId) {
+            CIMInstance instance = new CIMInstance("", host, port, credentialId);
+            instance.setUseSSL(useSSL);
+            return instance.doCheck();
+        }
+================================================================================

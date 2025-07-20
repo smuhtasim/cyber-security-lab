@@ -1,0 +1,71 @@
+Method: readAccessToken
+VULNERABLE VERSION:
+
+    public OAuth2AccessToken readAccessToken(String accessToken) {
+        TokenValidation tokenValidation = validateToken(accessToken);
+        Map<String, Object> claims = tokenValidation.getClaims();
+        accessToken = tokenValidation.getJwt().getEncoded();
+
+        // Expiry is verified by check_token
+        CompositeAccessToken token = new CompositeAccessToken(accessToken);
+        token.setTokenType(OAuth2AccessToken.BEARER_TYPE);
+        Integer exp = (Integer) claims.get(EXP);
+        if (null != exp) {
+            token.setExpiration(new Date(exp.longValue() * 1000l));
+        }
+
+        @SuppressWarnings("unchecked")
+        ArrayList<String> scopes = (ArrayList<String>) claims.get(SCOPE);
+        if (null != scopes && scopes.size() > 0) {
+            token.setScope(new HashSet<>(scopes));
+        }
+        String clientId = (String) claims.get(CID);
+        ClientDetails client = clientDetailsService.loadClientByClientId(clientId, IdentityZoneHolder.get().getId());
+        String userId = (String)claims.get(USER_ID);
+        // Only check user access tokens
+        if (null != userId) {
+            @SuppressWarnings("unchecked")
+            ArrayList<String> tokenScopes = (ArrayList<String>) claims.get(SCOPE);
+            Set<String> autoApprovedScopes = getAutoApprovedScopes(claims.get(GRANT_TYPE), tokenScopes, client);
+            checkForApproval(userId, clientId, tokenScopes, autoApprovedScopes);
+        }
+
+        return token;
+    }
+FIXED VERSION:
+
+    public OAuth2AccessToken readAccessToken(String accessToken) {
+        TokenValidation tokenValidation = validateToken(accessToken)
+          .checkAccessToken()
+          .throwIfInvalid();
+
+        Map<String, Object> claims = tokenValidation.getClaims();
+        accessToken = tokenValidation.getJwt().getEncoded();
+
+        // Expiry is verified by check_token
+        CompositeAccessToken token = new CompositeAccessToken(accessToken);
+        token.setTokenType(OAuth2AccessToken.BEARER_TYPE);
+        Integer exp = (Integer) claims.get(EXP);
+        if (null != exp) {
+            token.setExpiration(new Date(exp.longValue() * 1000l));
+        }
+
+        @SuppressWarnings("unchecked")
+        ArrayList<String> scopes = (ArrayList<String>) claims.get(SCOPE);
+        if (null != scopes && scopes.size() > 0) {
+            token.setScope(new HashSet<>(scopes));
+        }
+        String clientId = (String) claims.get(CID);
+        ClientDetails client = clientDetailsService.loadClientByClientId(clientId, IdentityZoneHolder.get().getId());
+        String userId = (String)claims.get(USER_ID);
+        // Only check user access tokens
+        if (null != userId) {
+            @SuppressWarnings("unchecked")
+            ArrayList<String> tokenScopes = (ArrayList<String>) claims.get(SCOPE);
+            Set<String> autoApprovedScopes = getAutoApprovedScopes(claims.get(GRANT_TYPE), tokenScopes, client);
+            checkForApproval(userId, clientId, tokenScopes, autoApprovedScopes);
+        }
+
+        return token;
+    }
+================================================================================

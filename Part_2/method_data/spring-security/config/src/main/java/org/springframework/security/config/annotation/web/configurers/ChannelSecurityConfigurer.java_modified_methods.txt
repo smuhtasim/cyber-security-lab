@@ -1,0 +1,24 @@
+Method: ChannelSecurityConfigurer
+VULNERABLE VERSION:
+
+	public ChannelSecurityConfigurer() {
+	}
+FIXED VERSION:
+
+	public ChannelSecurityConfigurer(ApplicationContext context) {
+		this.REGISTRY = new ChannelRequestMatcherRegistry(context);
+	}
+================================================================================
+Method: ChannelRequestMatcherRegistry
+VULNERABLE VERSION:
+
+
+		private ChannelRequestMatcherRegistry() {
+		}
+FIXED VERSION:
+
+
+		private ChannelRequestMatcherRegistry(ApplicationContext context) {
+			setApplicationContext(context);
+		}
+================================================================================

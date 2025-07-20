@@ -1,0 +1,94 @@
+Method: chooseRandomPrime
+VULNERABLE VERSION:
+
+    protected BigInteger chooseRandomPrime(int bitlength, BigInteger e, BigInteger sqrdBound)
+    {
+        int iterations = getNumberOfIterations(bitlength, param.getCertainty());
+
+        for (int i = 0; i != 5 * bitlength; i++)
+        {
+            BigInteger p = new BigInteger(bitlength, 1, param.getRandom());
+
+            if (p.mod(e).equals(ONE))
+            {
+                continue;
+            }
+
+            if (p.multiply(p).compareTo(sqrdBound) < 0)
+            {
+                continue;
+            }
+
+            if (!isProbablePrime(p, iterations))
+            {
+                continue;
+            }
+
+            if (!e.gcd(p.subtract(ONE)).equals(ONE))
+            {
+                continue;
+            }
+
+            return p;
+        }
+
+        throw new IllegalStateException("unable to generate prime number for RSA key");
+    }
+FIXED VERSION:
+
+    protected BigInteger chooseRandomPrime(int bitlength, BigInteger e, BigInteger sqrdBound)
+    {
+        for (int i = 0; i != 5 * bitlength; i++)
+        {
+            BigInteger p = new BigInteger(bitlength, 1, param.getRandom());
+
+            if (p.mod(e).equals(ONE))
+            {
+                continue;
+            }
+
+            if (p.multiply(p).compareTo(sqrdBound) < 0)
+            {
+                continue;
+            }
+
+            if (!isProbablePrime(p))
+            {
+                continue;
+            }
+
+            if (!e.gcd(p.subtract(ONE)).equals(ONE))
+            {
+                continue;
+            }
+
+            return p;
+        }
+
+        throw new IllegalStateException("unable to generate prime number for RSA key");
+    }
+================================================================================
+Method: isProbablePrime
+VULNERABLE VERSION:
+
+
+    protected boolean isProbablePrime(BigInteger x, int iterations)
+    {
+        /*
+         * Primes class for FIPS 186-4 C.3 primality checking
+         */
+        return !Primes.hasAnySmallFactors(x) && Primes.isMRProbablePrime(x, param.getRandom(), iterations);
+    }
+FIXED VERSION:
+
+
+    protected boolean isProbablePrime(BigInteger x)
+    {
+        int iterations = getNumberOfIterations(x.bitLength(), param.getCertainty());
+
+        /*
+         * Primes class for FIPS 186-4 C.3 primality checking
+         */
+        return !Primes.hasAnySmallFactors(x) && Primes.isMRProbablePrime(x, param.getRandom(), iterations);
+    }
+================================================================================

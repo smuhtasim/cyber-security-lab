@@ -1,0 +1,529 @@
+Method: setWorkDir
+VULNERABLE VERSION:
+
+    public void setWorkDir(File workDir) {
+        this.loaderDir = new File(workDir, "loader");
+    }
+FIXED VERSION:
+
+    public void setWorkDir(File workDir) {
+        this.loaderDir = new File(workDir, "loader");
+        if (loaderDir == null) {
+            canonicalLoaderDir = null;
+        } else { 
+            try {
+                canonicalLoaderDir = loaderDir.getCanonicalPath();
+                if (!canonicalLoaderDir.endsWith(File.separator)) {
+                    canonicalLoaderDir += File.separator;
+                }
+            } catch (IOException ioe) {
+                canonicalLoaderDir = null;
+            }
+        }
+
+    }
+================================================================================
+Method: findResourceInternal
+VULNERABLE VERSION:
+
+    protected ResourceEntry findResourceInternal(String name, String path) {
+
+        if (!started) {
+            log.info(sm.getString("webappClassLoader.stopped", name));
+            return null;
+        }
+
+        if ((name == null) || (path == null))
+            return null;
+
+        ResourceEntry entry = (ResourceEntry) resourceEntries.get(name);
+        if (entry != null)
+            return entry;
+
+        int contentLength = -1;
+        InputStream binaryStream = null;
+
+        int jarFilesLength = jarFiles.length;
+        int repositoriesLength = repositories.length;
+
+        int i;
+
+        Resource resource = null;
+
+        boolean fileNeedConvert = false;
+
+        for (i = 0; (entry == null) && (i < repositoriesLength); i++) {
+            try {
+
+                String fullPath = repositories[i] + path;
+
+                Object lookupResult = resources.lookup(fullPath);
+                if (lookupResult instanceof Resource) {
+                    resource = (Resource) lookupResult;
+                }
+
+                // Note : Not getting an exception here means the resource was
+                // found
+                entry = findResourceInternal(files[i], path);
+
+                ResourceAttributes attributes =
+                    (ResourceAttributes) resources.getAttributes(fullPath);
+                contentLength = (int) attributes.getContentLength();
+                entry.lastModified = attributes.getLastModified();
+
+                if (resource != null) {
+
+
+                    try {
+                        binaryStream = resource.streamContent();
+                    } catch (IOException e) {
+                        return null;
+                    }
+
+                    if (needConvert) {
+                        if (path.endsWith(".properties")) {
+                            fileNeedConvert = true;
+                        }
+                    }
+
+                    // Register the full path for modification checking
+                    // Note: Only syncing on a 'constant' object is needed
+                    synchronized (allPermission) {
+
+                        int j;
+
+                        long[] result2 = 
+                            new long[lastModifiedDates.length + 1];
+                        for (j = 0; j < lastModifiedDates.length; j++) {
+                            result2[j] = lastModifiedDates[j];
+                        }
+                        result2[lastModifiedDates.length] = entry.lastModified;
+                        lastModifiedDates = result2;
+
+                        String[] result = new String[paths.length + 1];
+                        for (j = 0; j < paths.length; j++) {
+                            result[j] = paths[j];
+                        }
+                        result[paths.length] = fullPath;
+                        paths = result;
+
+                    }
+
+                }
+
+            } catch (NamingException e) {
+            }
+        }
+
+        if ((entry == null) && (notFoundResources.containsKey(name)))
+            return null;
+
+        JarEntry jarEntry = null;
+
+        synchronized (jarFiles) {
+
+            if (!openJARs()) {
+                return null;
+            }
+            for (i = 0; (entry == null) && (i < jarFilesLength); i++) {
+
+                jarEntry = jarFiles[i].getJarEntry(path);
+
+                if (jarEntry != null) {
+
+                    entry = new ResourceEntry();
+                    try {
+                        entry.codeBase = getURL(jarRealFiles[i], false);
+                        String jarFakeUrl = getURI(jarRealFiles[i]).toString();
+                        jarFakeUrl = "jar:" + jarFakeUrl + "!/" + path;
+                        entry.source = new URL(jarFakeUrl);
+                        entry.lastModified = jarRealFiles[i].lastModified();
+                    } catch (MalformedURLException e) {
+                        return null;
+                    }
+                    contentLength = (int) jarEntry.getSize();
+                    try {
+                        entry.manifest = jarFiles[i].getManifest();
+                        binaryStream = jarFiles[i].getInputStream(jarEntry);
+                    } catch (IOException e) {
+                        return null;
+                    }
+
+                    // Extract resources contained in JAR to the workdir
+                    if (antiJARLocking && !(path.endsWith(".class"))) {
+                        byte[] buf = new byte[1024];
+                        File resourceFile = new File
+                            (loaderDir, jarEntry.getName());
+                        if (!resourceFile.exists()) {
+                            Enumeration entries = jarFiles[i].entries();
+                            while (entries.hasMoreElements()) {
+                                JarEntry jarEntry2 = 
+                                    (JarEntry) entries.nextElement();
+                                if (!(jarEntry2.isDirectory()) 
+                                    && (!jarEntry2.getName().endsWith
+                                        (".class"))) {
+                                    resourceFile = new File
+                                        (loaderDir, jarEntry2.getName());
+                                    resourceFile.getParentFile().mkdirs();
+                                    FileOutputStream os = null;
+                                    InputStream is = null;
+                                    try {
+                                        is = jarFiles[i].getInputStream
+                                            (jarEntry2);
+                                        os = new FileOutputStream
+                                            (resourceFile);
+                                        while (true) {
+                                            int n = is.read(buf);
+                                            if (n <= 0) {
+                                                break;
+                                            }
+                                            os.write(buf, 0, n);
+                                        }
+                                    } catch (IOException e) {
+                                        // Ignore
+                                    } finally {
+                                        try {
+                                            if (is != null) {
+                                                is.close();
+                                            }
+                                        } catch (IOException e) {
+                                        }
+                                        try {
+                                            if (os != null) {
+                                                os.close();
+                                            }
+                                        } catch (IOException e) {
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                }
+
+            }
+
+            if (entry == null) {
+                synchronized (notFoundResources) {
+                    notFoundResources.put(name, name);
+                }
+                return null;
+            }
+
+            if (binaryStream != null) {
+
+                byte[] binaryContent = new byte[contentLength];
+
+                int pos = 0;
+                try {
+
+                    while (true) {
+                        int n = binaryStream.read(binaryContent, pos,
+                                                  binaryContent.length - pos);
+                        if (n <= 0)
+                            break;
+                        pos += n;
+                    }
+                } catch (IOException e) {
+                    log.error(sm.getString("webappClassLoader.readError", name), e);
+                    return null;
+                } finally {
+                    try {
+                        binaryStream.close();
+                    } catch (IOException e) {}
+                }
+                if (fileNeedConvert) {
+                    String str = new String(binaryContent,0,pos);
+                    try {
+                        binaryContent = str.getBytes("UTF-8");
+                    } catch (Exception e) {
+                        return null;
+                    }
+                }
+                entry.binaryContent = binaryContent;
+
+                // The certificates are only available after the JarEntry 
+                // associated input stream has been fully read
+                if (jarEntry != null) {
+                    entry.certificates = jarEntry.getCertificates();
+                }
+
+            }
+
+        }
+
+        // Add the entry in the local resource repository
+        synchronized (resourceEntries) {
+            // Ensures that all the threads which may be in a race to load
+            // a particular class all end up with the same ResourceEntry
+            // instance
+            ResourceEntry entry2 = (ResourceEntry) resourceEntries.get(name);
+            if (entry2 == null) {
+                resourceEntries.put(name, entry);
+            } else {
+                entry = entry2;
+            }
+        }
+
+        return entry;
+
+    }
+FIXED VERSION:
+
+    protected ResourceEntry findResourceInternal(String name, String path) {
+
+        if (!started) {
+            log.info(sm.getString("webappClassLoader.stopped", name));
+            return null;
+        }
+
+        if ((name == null) || (path == null))
+            return null;
+
+        ResourceEntry entry = (ResourceEntry) resourceEntries.get(name);
+        if (entry != null)
+            return entry;
+
+        int contentLength = -1;
+        InputStream binaryStream = null;
+
+        int jarFilesLength = jarFiles.length;
+        int repositoriesLength = repositories.length;
+
+        int i;
+
+        Resource resource = null;
+
+        boolean fileNeedConvert = false;
+
+        for (i = 0; (entry == null) && (i < repositoriesLength); i++) {
+            try {
+
+                String fullPath = repositories[i] + path;
+
+                Object lookupResult = resources.lookup(fullPath);
+                if (lookupResult instanceof Resource) {
+                    resource = (Resource) lookupResult;
+                }
+
+                // Note : Not getting an exception here means the resource was
+                // found
+                entry = findResourceInternal(files[i], path);
+
+                ResourceAttributes attributes =
+                    (ResourceAttributes) resources.getAttributes(fullPath);
+                contentLength = (int) attributes.getContentLength();
+                entry.lastModified = attributes.getLastModified();
+
+                if (resource != null) {
+
+
+                    try {
+                        binaryStream = resource.streamContent();
+                    } catch (IOException e) {
+                        return null;
+                    }
+
+                    if (needConvert) {
+                        if (path.endsWith(".properties")) {
+                            fileNeedConvert = true;
+                        }
+                    }
+
+                    // Register the full path for modification checking
+                    // Note: Only syncing on a 'constant' object is needed
+                    synchronized (allPermission) {
+
+                        int j;
+
+                        long[] result2 = 
+                            new long[lastModifiedDates.length + 1];
+                        for (j = 0; j < lastModifiedDates.length; j++) {
+                            result2[j] = lastModifiedDates[j];
+                        }
+                        result2[lastModifiedDates.length] = entry.lastModified;
+                        lastModifiedDates = result2;
+
+                        String[] result = new String[paths.length + 1];
+                        for (j = 0; j < paths.length; j++) {
+                            result[j] = paths[j];
+                        }
+                        result[paths.length] = fullPath;
+                        paths = result;
+
+                    }
+
+                }
+
+            } catch (NamingException e) {
+            }
+        }
+
+        if ((entry == null) && (notFoundResources.containsKey(name)))
+            return null;
+
+        JarEntry jarEntry = null;
+
+        synchronized (jarFiles) {
+
+            if (!openJARs()) {
+                return null;
+            }
+            for (i = 0; (entry == null) && (i < jarFilesLength); i++) {
+
+                jarEntry = jarFiles[i].getJarEntry(path);
+
+                if (jarEntry != null) {
+
+                    entry = new ResourceEntry();
+                    try {
+                        entry.codeBase = getURL(jarRealFiles[i], false);
+                        String jarFakeUrl = getURI(jarRealFiles[i]).toString();
+                        jarFakeUrl = "jar:" + jarFakeUrl + "!/" + path;
+                        entry.source = new URL(jarFakeUrl);
+                        entry.lastModified = jarRealFiles[i].lastModified();
+                    } catch (MalformedURLException e) {
+                        return null;
+                    }
+                    contentLength = (int) jarEntry.getSize();
+                    try {
+                        entry.manifest = jarFiles[i].getManifest();
+                        binaryStream = jarFiles[i].getInputStream(jarEntry);
+                    } catch (IOException e) {
+                        return null;
+                    }
+
+                    // Extract resources contained in JAR to the workdir
+                    if (antiJARLocking && !(path.endsWith(".class"))) {
+                        byte[] buf = new byte[1024];
+                        File resourceFile = new File
+                            (loaderDir, jarEntry.getName());
+                        if (!resourceFile.exists()) {
+                            Enumeration entries = jarFiles[i].entries();
+                            while (entries.hasMoreElements()) {
+                                JarEntry jarEntry2 = 
+                                    (JarEntry) entries.nextElement();
+                                if (!(jarEntry2.isDirectory()) 
+                                    && (!jarEntry2.getName().endsWith
+                                        (".class"))) {
+                                    resourceFile = new File
+                                        (loaderDir, jarEntry2.getName());
+                                    try {
+                                        if (!resourceFile.getCanonicalPath().startsWith(
+                                                canonicalLoaderDir)) {
+                                            throw new IllegalArgumentException(
+                                                    sm.getString("webappClassLoader.illegalJarPath",
+                                                            jarEntry2.getName()));
+                                        }
+                                    } catch (IOException ioe) {
+                                        throw new IllegalArgumentException(
+                                                sm.getString("webappClassLoader.validationErrorJarPath",
+                                                        jarEntry2.getName()), ioe);
+                                    }
+                                    resourceFile.getParentFile().mkdirs();
+                                    FileOutputStream os = null;
+                                    InputStream is = null;
+                                    try {
+                                        is = jarFiles[i].getInputStream
+                                            (jarEntry2);
+                                        os = new FileOutputStream
+                                            (resourceFile);
+                                        while (true) {
+                                            int n = is.read(buf);
+                                            if (n <= 0) {
+                                                break;
+                                            }
+                                            os.write(buf, 0, n);
+                                        }
+                                    } catch (IOException e) {
+                                        // Ignore
+                                    } finally {
+                                        try {
+                                            if (is != null) {
+                                                is.close();
+                                            }
+                                        } catch (IOException e) {
+                                        }
+                                        try {
+                                            if (os != null) {
+                                                os.close();
+                                            }
+                                        } catch (IOException e) {
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                }
+
+            }
+
+            if (entry == null) {
+                synchronized (notFoundResources) {
+                    notFoundResources.put(name, name);
+                }
+                return null;
+            }
+
+            if (binaryStream != null) {
+
+                byte[] binaryContent = new byte[contentLength];
+
+                int pos = 0;
+                try {
+
+                    while (true) {
+                        int n = binaryStream.read(binaryContent, pos,
+                                                  binaryContent.length - pos);
+                        if (n <= 0)
+                            break;
+                        pos += n;
+                    }
+                } catch (IOException e) {
+                    log.error(sm.getString("webappClassLoader.readError", name), e);
+                    return null;
+                } finally {
+                    try {
+                        binaryStream.close();
+                    } catch (IOException e) {}
+                }
+                if (fileNeedConvert) {
+                    String str = new String(binaryContent,0,pos);
+                    try {
+                        binaryContent = str.getBytes("UTF-8");
+                    } catch (Exception e) {
+                        return null;
+                    }
+                }
+                entry.binaryContent = binaryContent;
+
+                // The certificates are only available after the JarEntry 
+                // associated input stream has been fully read
+                if (jarEntry != null) {
+                    entry.certificates = jarEntry.getCertificates();
+                }
+
+            }
+
+        }
+
+        // Add the entry in the local resource repository
+        synchronized (resourceEntries) {
+            // Ensures that all the threads which may be in a race to load
+            // a particular class all end up with the same ResourceEntry
+            // instance
+            ResourceEntry entry2 = (ResourceEntry) resourceEntries.get(name);
+            if (entry2 == null) {
+                resourceEntries.put(name, entry);
+            } else {
+                entry = entry2;
+            }
+        }
+
+        return entry;
+
+    }
+================================================================================

@@ -1,0 +1,26 @@
+Method: getResponseToken
+VULNERABLE VERSION:
+
+  
+    private String getResponseToken(ServletRequest request) {
+        if (request.getParameter(FederationConstants.PARAM_RESULT) != null) {
+            return request.getParameter(FederationConstants.PARAM_RESULT);
+        } else if (request.getParameter(SAMLSSOConstants.SAML_RESPONSE) != null) {
+            return request.getParameter(SAMLSSOConstants.SAML_RESPONSE);
+        }
+        
+        return null;
+    }
+FIXED VERSION:
+
+    
+    private String getResponseToken(ServletRequest request) {
+        if (request.getParameter(FederationConstants.PARAM_RESULT) != null) {
+            return request.getParameter(FederationConstants.PARAM_RESULT);
+        } else if (request.getParameter(SAMLSSOConstants.SAML_RESPONSE) != null) {
+            return request.getParameter(SAMLSSOConstants.SAML_RESPONSE);
+        }
+        
+        return null;
+    }
+================================================================================

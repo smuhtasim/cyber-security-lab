@@ -1,0 +1,10 @@
+Method: cloneTransformer
+VULNERABLE VERSION:
+ T> cloneTransformer() {
+        return (Transformer<T, T>) INSTANCE;
+    }
+FIXED VERSION:
+ T> cloneTransformer() {
+        return INSTANCE;
+    }
+================================================================================

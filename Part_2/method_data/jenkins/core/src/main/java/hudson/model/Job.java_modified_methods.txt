@@ -1,0 +1,20 @@
+Method: getCharacteristicEnvVars
+VULNERABLE VERSION:
+
+    public EnvVars getCharacteristicEnvVars() {
+        EnvVars env = new EnvVars();
+        env.put("JENKINS_SERVER_COOKIE",Util.getDigestOf("ServerID:"+ Jenkins.getInstance().getSecretKey()));
+        env.put("HUDSON_SERVER_COOKIE",Util.getDigestOf("ServerID:"+ Jenkins.getInstance().getSecretKey())); // Legacy compatibility
+        env.put("JOB_NAME",getFullName());
+        return env;
+    }
+FIXED VERSION:
+
+    public EnvVars getCharacteristicEnvVars() {
+        EnvVars env = new EnvVars();
+        env.put("JENKINS_SERVER_COOKIE",SERVER_COOKIE.get());
+        env.put("HUDSON_SERVER_COOKIE",SERVER_COOKIE.get()); // Legacy compatibility
+        env.put("JOB_NAME",getFullName());
+        return env;
+    }
+================================================================================

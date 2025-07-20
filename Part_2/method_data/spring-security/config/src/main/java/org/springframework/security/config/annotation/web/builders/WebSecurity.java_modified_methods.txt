@@ -1,0 +1,13 @@
+Method: IgnoredRequestConfigurer
+VULNERABLE VERSION:
+
+
+		private IgnoredRequestConfigurer() {
+		}
+FIXED VERSION:
+
+
+		private IgnoredRequestConfigurer(ApplicationContext context) {
+			setApplicationContext(context);
+		}
+================================================================================

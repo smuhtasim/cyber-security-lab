@@ -1,0 +1,19 @@
+Method: setSubscriptionRegistry
+VULNERABLE VERSION:
+
+	public void setSubscriptionRegistry(SubscriptionRegistry subscriptionRegistry) {
+		Assert.notNull(subscriptionRegistry, "SubscriptionRegistry must not be null");
+		this.subscriptionRegistry = subscriptionRegistry;
+		initPathMatcherToUse();
+		initCacheLimitToUse();
+	}
+FIXED VERSION:
+
+	public void setSubscriptionRegistry(SubscriptionRegistry subscriptionRegistry) {
+		Assert.notNull(subscriptionRegistry, "SubscriptionRegistry must not be null");
+		this.subscriptionRegistry = subscriptionRegistry;
+		initPathMatcherToUse();
+		initCacheLimitToUse();
+		initSelectorHeaderNameToUse();
+	}
+================================================================================

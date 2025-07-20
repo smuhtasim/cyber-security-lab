@@ -1,0 +1,16 @@
+Method: IllegalCharacterException
+VULNERABLE VERSION:
+
+        private IllegalCharacterException(State state,byte ch,ByteBuffer buffer)
+        {
+            super(String.format("Illegal character 0x%X in state=%s for buffer %s",ch,state,toDebugString(buffer)));
+        }
+FIXED VERSION:
+
+        private IllegalCharacterException(State state,byte ch,ByteBuffer buffer)
+        {
+            super(400,String.format("Illegal character 0x%X",ch));
+            // Bug #460642 - don't reveal buffers to end user
+            LOG.warn(String.format("Illegal character 0x%X in state=%s for buffer %s",ch,state,BufferUtil.toDetailString(buffer)));
+        }
+================================================================================

@@ -1,0 +1,183 @@
+Method: loadXml
+VULNERABLE VERSION:
+
+
+
+    public static HierarchicalConfiguration loadXml(InputStream xmlStream) {
+        XMLConfiguration cfg = new XMLConfiguration();
+        try {
+            cfg.load(xmlStream);
+            return cfg;
+        } catch (ConfigurationException e) {
+            throw new IllegalArgumentException("Cannot load xml from Stream", e);
+        }
+    }
+FIXED VERSION:
+
+
+
+    public static HierarchicalConfiguration loadXml(InputStream xmlStream) {
+        try {
+            XMLConfiguration cfg = new XMLConfiguration();
+            DocumentBuilderFactory dbfactory = DocumentBuilderFactory.newInstance();
+            //Disabling DTDs in order to avoid XXE xml-based attacks.
+            disableFeature(dbfactory, DISALLOW_DTD_FEATURE);
+            disableFeature(dbfactory, DISALLOW_EXTERNAL_DTD);
+            dbfactory.setXIncludeAware(false);
+            dbfactory.setExpandEntityReferences(false);
+            cfg.setDocumentBuilder(dbfactory.newDocumentBuilder());
+            cfg.load(xmlStream);
+            return cfg;
+        } catch (ConfigurationException | ParserConfigurationException e) {
+            throw new IllegalArgumentException("Cannot load xml from Stream", e);
+        }
+    }
+================================================================================
+Method: parseStreamControllers
+VULNERABLE VERSION:
+
+
+    public static List<ControllerInfo> parseStreamControllers(HierarchicalConfiguration cfg) {
+        List<ControllerInfo> controllers = new ArrayList<>();
+        List<HierarchicalConfiguration> fields =
+                cfg.configurationsAt("data.capable-switch." +
+                                             "logical-switches." +
+                                             "switch.controllers.controller");
+        for (HierarchicalConfiguration sub : fields) {
+            controllers.add(new ControllerInfo(
+                    IpAddress.valueOf(sub.getString("ip-address")),
+                    Integer.parseInt(sub.getString("port")),
+                    sub.getString("protocol")));
+        }
+        return controllers;
+    }
+FIXED VERSION:
+
+
+    public static List<ControllerInfo> parseStreamControllers(HierarchicalConfiguration cfg) {
+        List<ControllerInfo> controllers = new ArrayList<>();
+        List<HierarchicalConfiguration> fields =
+                cfg.configurationsAt("data.capable-switch." +
+                        "logical-switches." +
+                        "switch.controllers.controller");
+        for (HierarchicalConfiguration sub : fields) {
+            controllers.add(new ControllerInfo(
+                    IpAddress.valueOf(sub.getString("ip-address")),
+                    Integer.parseInt(sub.getString("port")),
+                    sub.getString("protocol")));
+        }
+        return controllers;
+    }
+================================================================================
+Method: parseSwitchId
+VULNERABLE VERSION:
+
+
+
+    protected static String parseSwitchId(HierarchicalConfiguration cfg) {
+        HierarchicalConfiguration field =
+                cfg.configurationAt("data.capable-switch." +
+                                            "logical-switches." +
+                                            "switch");
+        return field.getProperty("id").toString();
+    }
+FIXED VERSION:
+
+
+
+    protected static String parseSwitchId(HierarchicalConfiguration cfg) {
+        HierarchicalConfiguration field =
+                cfg.configurationAt("data.capable-switch." +
+                        "logical-switches." +
+                        "switch");
+        return field.getProperty("id").toString();
+    }
+================================================================================
+Method: createControllersConfig
+VULNERABLE VERSION:
+
+
+    public static String createControllersConfig(HierarchicalConfiguration cfg,
+                                                 HierarchicalConfiguration actualCfg,
+                                                 String target, String netconfOperation,
+                                                 String controllerOperation,
+                                                 List<ControllerInfo> controllers) {
+        //cfg.getKeys().forEachRemaining(key -> System.out.println(key));
+        cfg.setProperty("edit-config.target", target);
+        cfg.setProperty("edit-config.default-operation", netconfOperation);
+        cfg.setProperty("edit-config.config.capable-switch.id",
+                        parseCapableSwitchId(actualCfg));
+        cfg.setProperty("edit-config.config.capable-switch." +
+                                "logical-switches.switch.id", parseSwitchId(actualCfg));
+        List<ConfigurationNode> newControllers = new ArrayList<>();
+        for (ControllerInfo ci : controllers) {
+            XMLConfiguration controller = new XMLConfiguration();
+            controller.setRoot(new HierarchicalConfiguration.Node("controller"));
+            String id = ci.type() + ":" + ci.ip() + ":" + ci.port();
+            controller.setProperty("id", id);
+            controller.setProperty("ip-address", ci.ip());
+            controller.setProperty("port", ci.port());
+            controller.setProperty("protocol", ci.type());
+            newControllers.add(controller.getRootNode());
+        }
+        cfg.addNodes("edit-config.config.capable-switch.logical-switches." +
+                             "switch.controllers", newControllers);
+        XMLConfiguration editcfg = (XMLConfiguration) cfg;
+        StringWriter stringWriter = new StringWriter();
+        try {
+            editcfg.save(stringWriter);
+        } catch (ConfigurationException e) {
+            log.error("createControllersConfig()", e);
+        }
+        String s = stringWriter.toString()
+                .replaceAll("<controller>",
+                            "<controller nc:operation=\"" + controllerOperation + "\">");
+        s = s.replace("<target>" + target + "</target>",
+                      "<target><" + target + "/></target>");
+        return s;
+
+    }
+FIXED VERSION:
+
+
+    public static String createControllersConfig(HierarchicalConfiguration cfg,
+                                                 HierarchicalConfiguration actualCfg,
+                                                 String target, String netconfOperation,
+                                                 String controllerOperation,
+                                                 List<ControllerInfo> controllers) {
+        //cfg.getKeys().forEachRemaining(key -> System.out.println(key));
+        cfg.setProperty("edit-config.target", target);
+        cfg.setProperty("edit-config.default-operation", netconfOperation);
+        cfg.setProperty("edit-config.config.capable-switch.id",
+                parseCapableSwitchId(actualCfg));
+        cfg.setProperty("edit-config.config.capable-switch." +
+                "logical-switches.switch.id", parseSwitchId(actualCfg));
+        List<ConfigurationNode> newControllers = new ArrayList<>();
+        for (ControllerInfo ci : controllers) {
+            XMLConfiguration controller = new XMLConfiguration();
+            controller.setRoot(new HierarchicalConfiguration.Node("controller"));
+            String id = ci.type() + ":" + ci.ip() + ":" + ci.port();
+            controller.setProperty("id", id);
+            controller.setProperty("ip-address", ci.ip());
+            controller.setProperty("port", ci.port());
+            controller.setProperty("protocol", ci.type());
+            newControllers.add(controller.getRootNode());
+        }
+        cfg.addNodes("edit-config.config.capable-switch.logical-switches." +
+                "switch.controllers", newControllers);
+        XMLConfiguration editcfg = (XMLConfiguration) cfg;
+        StringWriter stringWriter = new StringWriter();
+        try {
+            editcfg.save(stringWriter);
+        } catch (ConfigurationException e) {
+            log.error("createControllersConfig()", e);
+        }
+        String s = stringWriter.toString()
+                .replaceAll("<controller>",
+                        "<controller nc:operation=\"" + controllerOperation + "\">");
+        s = s.replace("<target>" + target + "</target>",
+                "<target><" + target + "/></target>");
+        return s;
+
+    }
+================================================================================

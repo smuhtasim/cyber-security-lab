@@ -1,0 +1,23 @@
+Method: Request
+VULNERABLE VERSION:
+
+
+
+    public Request() {
+
+        parameters.setQuery(queryMB);
+        parameters.setURLDecoder(urlDecoder);
+        parameters.setHeaders(headers);
+
+    }
+FIXED VERSION:
+
+
+
+    public Request() {
+
+        parameters.setQuery(queryMB);
+        parameters.setURLDecoder(urlDecoder);
+
+    }
+================================================================================

@@ -1,0 +1,14 @@
+Method: JpaSort
+VULNERABLE VERSION:
+
+
+	private JpaSort(List<Order> orders, Direction direction, List<Path<?, ?>> paths) {
+		super(combine(orders, direction, paths));
+	}
+FIXED VERSION:
+
+
+	private JpaSort(List<Order> orders) {
+		super(orders);
+	}
+================================================================================

@@ -1,0 +1,13 @@
+Method: URIMappingInterceptor
+VULNERABLE VERSION:
+
+    
+    public URIMappingInterceptor() {
+        super(Phase.UNMARSHAL);
+    }
+FIXED VERSION:
+
+    public URIMappingInterceptor() {
+        super(Phase.UNMARSHAL);
+    }
+================================================================================

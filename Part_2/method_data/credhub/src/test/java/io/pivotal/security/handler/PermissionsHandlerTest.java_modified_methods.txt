@@ -1,0 +1,142 @@
+Method: setPermissions_whenUserDoesNotHavePermission_throwsException
+VULNERABLE VERSION:
+
+  public void setPermissions_whenUserDoesNotHavePermission_throwsException() {
+    when(permissionService.hasPermission(USER, CREDENTIAL_NAME, WRITE_ACL))
+        .thenReturn(false);
+    when(permissionService.validAclUpdateOperation(userContext, ACTOR_NAME))
+        .thenReturn(true);
+
+    try {
+      subject.setPermissions(userContext, CREDENTIAL_NAME, emptyList());
+      fail("should throw");
+    } catch (EntryNotFoundException e) {
+      assertThat(e.getMessage(), equalTo("error.acl.lacks_credential_write"));
+      verify(permissionsDataService, times(0)).saveAccessControlEntries(any(), any());
+    }
+  }
+FIXED VERSION:
+
+  public void setPermissions_whenUserDoesNotHavePermission_throwsException() {
+    when(permissionService.hasPermission(USER, CREDENTIAL_NAME, WRITE_ACL))
+        .thenReturn(false);
+    when(permissionService.validAclUpdateOperation(userContext, ACTOR_NAME))
+        .thenReturn(true);
+
+    try {
+      subject.setPermissions(userContext, CREDENTIAL_NAME, emptyList());
+      fail("should throw");
+    } catch (EntryNotFoundException e) {
+      assertThat(e.getMessage(), equalTo("error.credential.invalid_access"));
+      verify(permissionsDataService, times(0)).saveAccessControlEntries(any(), any());
+    }
+  }
+================================================================================
+Method: setPermissions_whenTheCredentialDoesNotExist_throwsException
+VULNERABLE VERSION:
+
+  public void setPermissions_whenTheCredentialDoesNotExist_throwsException() {
+    when(permissionService.hasPermission(any(String.class), eq(CREDENTIAL_NAME), eq(WRITE_ACL)))
+        .thenReturn(true);
+    when(permissionService.validAclUpdateOperation(userContext, ACTOR_NAME))
+        .thenReturn(true);
+    when(credentialNameDataService.find(CREDENTIAL_NAME))
+        .thenReturn(null);
+
+    try {
+      subject.setPermissions(userContext, CREDENTIAL_NAME, emptyList());
+      fail("should throw");
+    } catch (EntryNotFoundException e) {
+      assertThat(e.getMessage(), equalTo("error.acl.lacks_credential_write"));
+      verify(permissionsDataService, times(0)).saveAccessControlEntries(any(), any());
+    }
+  }
+FIXED VERSION:
+
+  public void setPermissions_whenTheCredentialDoesNotExist_throwsException() {
+    when(permissionService.hasPermission(any(String.class), eq(CREDENTIAL_NAME), eq(WRITE_ACL)))
+        .thenReturn(true);
+    when(permissionService.validAclUpdateOperation(userContext, ACTOR_NAME))
+        .thenReturn(true);
+    when(credentialNameDataService.find(CREDENTIAL_NAME))
+        .thenReturn(null);
+
+    try {
+      subject.setPermissions(userContext, CREDENTIAL_NAME, emptyList());
+      fail("should throw");
+    } catch (EntryNotFoundException e) {
+      assertThat(e.getMessage(), equalTo("error.credential.invalid_access"));
+      verify(permissionsDataService, times(0)).saveAccessControlEntries(any(), any());
+    }
+  }
+================================================================================
+Method: deletePermissions_whenNothingIsDeleted_throwsAnException
+VULNERABLE VERSION:
+
+  public void deletePermissions_whenNothingIsDeleted_throwsAnException() {
+    when(permissionService.hasPermission(any(String.class), eq(CREDENTIAL_NAME), eq(WRITE_ACL)))
+        .thenReturn(true);
+    when(permissionService.validAclUpdateOperation(userContext, ACTOR_NAME))
+        .thenReturn(true);
+    when(permissionsDataService.deleteAccessControlEntry(CREDENTIAL_NAME, ACTOR_NAME))
+        .thenReturn(false);
+
+    try {
+      subject.deletePermissionEntry(userContext, CREDENTIAL_NAME, ACTOR_NAME);
+      fail("should throw");
+    } catch (EntryNotFoundException e) {
+      assertThat(e.getMessage(), equalTo("error.acl.lacks_credential_write"));
+    }
+  }
+FIXED VERSION:
+
+  public void deletePermissions_whenNothingIsDeleted_throwsAnException() {
+    when(permissionService.hasPermission(any(String.class), eq(CREDENTIAL_NAME), eq(WRITE_ACL)))
+        .thenReturn(true);
+    when(permissionService.validAclUpdateOperation(userContext, ACTOR_NAME))
+        .thenReturn(true);
+    when(permissionsDataService.deleteAccessControlEntry(CREDENTIAL_NAME, ACTOR_NAME))
+        .thenReturn(false);
+
+    try {
+      subject.deletePermissionEntry(userContext, CREDENTIAL_NAME, ACTOR_NAME);
+      fail("should throw");
+    } catch (EntryNotFoundException e) {
+      assertThat(e.getMessage(), equalTo("error.credential.invalid_access"));
+    }
+  }
+================================================================================
+Method: deletePermissions_whenTheUserLacksPermission_throwsInsteadOfDeletingThePermissions
+VULNERABLE VERSION:
+
+  public void deletePermissions_whenTheUserLacksPermission_throwsInsteadOfDeletingThePermissions() {
+    when(permissionService.hasPermission(any(String.class), eq(CREDENTIAL_NAME), eq(WRITE_ACL)))
+        .thenReturn(false);
+    when(permissionService.validAclUpdateOperation(userContext, ACTOR_NAME))
+        .thenReturn(true);
+
+    try {
+      subject.deletePermissionEntry(userContext, CREDENTIAL_NAME, ACTOR_NAME);
+      fail("should throw");
+    } catch (EntryNotFoundException e) {
+      assertThat(e.getMessage(), equalTo("error.acl.lacks_credential_write"));
+      verify(permissionsDataService, times(0)).deleteAccessControlEntry(any(), any());
+    }
+  }
+FIXED VERSION:
+
+  public void deletePermissions_whenTheUserLacksPermission_throwsInsteadOfDeletingThePermissions() {
+    when(permissionService.hasPermission(any(String.class), eq(CREDENTIAL_NAME), eq(WRITE_ACL)))
+        .thenReturn(false);
+    when(permissionService.validAclUpdateOperation(userContext, ACTOR_NAME))
+        .thenReturn(true);
+
+    try {
+      subject.deletePermissionEntry(userContext, CREDENTIAL_NAME, ACTOR_NAME);
+      fail("should throw");
+    } catch (EntryNotFoundException e) {
+      assertThat(e.getMessage(), equalTo("error.credential.invalid_access"));
+      verify(permissionsDataService, times(0)).deleteAccessControlEntry(any(), any());
+    }
+  }
+================================================================================

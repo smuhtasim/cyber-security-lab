@@ -1,0 +1,57 @@
+Method: engineGetIV
+VULNERABLE VERSION:
+
+
+
+    public byte[] engineGetIV()
+    {
+        return null;
+    }
+FIXED VERSION:
+
+
+
+    public byte[] engineGetIV()
+    {
+        if (engineSpec != null)
+        {
+            return engineSpec.getNonce();
+        }
+        return null;
+    }
+================================================================================
+Method: ECIESwithCipher
+VULNERABLE VERSION:
+
+
+        public ECIESwithCipher(BlockCipher cipher, int ivLength)
+        {
+            super(new IESEngine(new ECDHBasicAgreement(),
+                            new KDF2BytesGenerator(new SHA1Digest()),
+                            new HMac(new SHA1Digest()),
+                            new PaddedBufferedBlockCipher(cipher)), ivLength);
+        }
+FIXED VERSION:
+
+        public ECIESwithCipher(BlockCipher cipher, int ivLength)
+        {
+            super(new IESEngine(new ECDHBasicAgreement(),
+                            new KDF2BytesGenerator(new SHA1Digest()),
+                            new HMac(new SHA1Digest()),
+                            new PaddedBufferedBlockCipher(cipher)), ivLength);
+        }
+================================================================================
+Method: ECIESwithAESCBC
+VULNERABLE VERSION:
+
+        public ECIESwithAESCBC()
+        {
+            super(new CBCBlockCipher(new AESEngine()), 16);
+        }
+FIXED VERSION:
+
+        public ECIESwithAESCBC()
+        {
+            super(new CBCBlockCipher(new AESFastEngine()), 16);
+        }
+================================================================================

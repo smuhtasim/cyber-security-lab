@@ -1,0 +1,17 @@
+Method: testBogusPathCheck
+VULNERABLE VERSION:
+
+    public void testBogusPathCheck() {
+        TesseractOCRConfig config = new TesseractOCRConfig();
+        config.setTesseractPath("blahdeblahblah");
+        assertEquals("blahdeblahblah", config.getTesseractPath());
+    }
+FIXED VERSION:
+
+    public void testBogusPathCheck() {
+        //allow path that doesn't actually exist
+        TesseractOCRConfig config = new TesseractOCRConfig();
+        config.setTesseractPath("blahdeblahblah");
+        assertEquals("blahdeblahblah", config.getTesseractPath());
+    }
+================================================================================

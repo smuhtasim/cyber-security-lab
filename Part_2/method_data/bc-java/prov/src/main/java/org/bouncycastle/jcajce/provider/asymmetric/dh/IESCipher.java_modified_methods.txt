@@ -1,0 +1,39 @@
+Method: IESCipher
+VULNERABLE VERSION:
+
+
+    public IESCipher(OldIESEngine engine)
+    {
+        this.engine = engine;
+    }
+FIXED VERSION:
+
+
+    public IESCipher(IESEngine engine, int ivLength)
+    {
+        this.engine = engine;
+        this.ivLength = ivLength;
+    }
+================================================================================
+Method: engineGetIV
+VULNERABLE VERSION:
+
+
+
+    public byte[] engineGetIV()
+    {
+        return null;
+    }
+FIXED VERSION:
+
+
+
+    public byte[] engineGetIV()
+    {
+        if (engineSpec != null)
+        {
+            return engineSpec.getNonce();
+        }
+        return null;
+    }
+================================================================================

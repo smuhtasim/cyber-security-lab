@@ -1,0 +1,40 @@
+Method: checkStreamTest_NoStreamConfiguredForCIMStream
+VULNERABLE VERSION:
+
+    public void checkStreamTest_NoStreamConfiguredForCIMStream() {
+        CoverityPublisher publisher = new CoverityPublisherBuilder().build();
+        CIMInstance cimInstance = new CIMInstanceBuilder().withName("test-cim-instance").withHost("test-cim-instance").withPort(8080)
+                .withUser("admin").withPassword("password").withUseSSL(false).withCredentialId("")
+                .build();
+        CIMStream cimStream = new CIMStream("test-cim-instance", StringUtils.EMPTY, StringUtils.EMPTY);
+        when(descriptor.getInstance(any(CoverityPublisher.class))).thenReturn(cimInstance);
+
+        CheckConfig.StreamStatus status = CheckConfig.checkStream(publisher, cimStream);
+        assertNotNull(status);
+        assertFalse(status.isValid());
+        String statusMessage = status.getStatus();
+        assertNotNull(statusMessage);
+        assertEquals("[Stream] test-cim-instance/null/null : " +
+                "Could not find any Stream that matches the given configuration for this job.", statusMessage);
+        assertNull(status.getVersion());
+    }
+FIXED VERSION:
+
+    public void checkStreamTest_NoStreamConfiguredForCIMStream() {
+        setCredentialManager("admin", "password");
+        CoverityPublisher publisher = new CoverityPublisherBuilder().build();
+        CIMInstance cimInstance = new CIMInstanceBuilder().withName("test-cim-instance").withHost("test-cim-instance").withPort(8080)
+                .withUseSSL(false).withDefaultCredentialId().build();
+        CIMStream cimStream = new CIMStream("test-cim-instance", StringUtils.EMPTY, StringUtils.EMPTY);
+        when(descriptor.getInstance(any(CoverityPublisher.class))).thenReturn(cimInstance);
+
+        CheckConfig.StreamStatus status = CheckConfig.checkStream(publisher, cimStream);
+        assertNotNull(status);
+        assertFalse(status.isValid());
+        String statusMessage = status.getStatus();
+        assertNotNull(statusMessage);
+        assertEquals("[Stream] test-cim-instance/null/null : " +
+                "Could not find any Stream that matches the given configuration for this job.", statusMessage);
+        assertNull(status.getVersion());
+    }
+================================================================================

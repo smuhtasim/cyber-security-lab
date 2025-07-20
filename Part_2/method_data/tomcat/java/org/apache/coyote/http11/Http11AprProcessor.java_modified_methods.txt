@@ -1,0 +1,36 @@
+Method: Http11AprProcessor
+VULNERABLE VERSION:
+
+
+
+    public Http11AprProcessor(int headerBufferSize, AprEndpoint endpoint,
+            int maxTrailerSize) {
+
+        super(endpoint);
+
+        inputBuffer = new InternalAprInputBuffer(request, headerBufferSize);
+        request.setInputBuffer(inputBuffer);
+
+        outputBuffer = new InternalAprOutputBuffer(response, headerBufferSize);
+        response.setOutputBuffer(outputBuffer);
+
+        initializeFilters(maxTrailerSize);
+    }
+FIXED VERSION:
+
+
+
+    public Http11AprProcessor(int headerBufferSize, AprEndpoint endpoint,
+            int maxTrailerSize, int maxExtensionSize) {
+
+        super(endpoint);
+
+        inputBuffer = new InternalAprInputBuffer(request, headerBufferSize);
+        request.setInputBuffer(inputBuffer);
+
+        outputBuffer = new InternalAprOutputBuffer(response, headerBufferSize);
+        response.setOutputBuffer(outputBuffer);
+
+        initializeFilters(maxTrailerSize, maxExtensionSize);
+    }
+================================================================================

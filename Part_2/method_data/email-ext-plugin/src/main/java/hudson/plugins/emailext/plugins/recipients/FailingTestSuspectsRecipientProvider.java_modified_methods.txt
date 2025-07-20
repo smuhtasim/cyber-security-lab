@@ -1,0 +1,180 @@
+Method: addRecipients
+VULNERABLE VERSION:
+
+    public void addRecipients(final ExtendedEmailPublisherContext context, final EnvVars env,
+        final Set<InternetAddress> to, final Set<InternetAddress> cc, final Set<InternetAddress> bcc) {
+
+        final class Debug implements RecipientProviderUtilities.IDebug {
+            private final ExtendedEmailPublisherDescriptor descriptor
+                = Jenkins.getActiveInstance().getDescriptorByType(ExtendedEmailPublisherDescriptor.class);
+
+            private final PrintStream logger = context.getListener().getLogger();
+
+            public void send(final String format, final Object... args) {
+                descriptor.debug(logger, format, args);
+            }
+        }
+        final Debug debug = new Debug();
+
+        Set<User> users = null;
+
+        final Run<?, ?> currentRun = context.getRun();
+        if (currentRun == null) {
+            debug.send("currentRun was null");
+        } else {
+            final AbstractTestResultAction<?> testResultAction = currentRun.getAction(AbstractTestResultAction.class);
+            if (testResultAction == null) {
+                debug.send("testResultAction was null");
+            } else {
+                if (testResultAction.getFailCount() <= 0) {
+                    debug.send("getFailCount() returned <= 0");
+                } else {
+                    users = new HashSet<>();
+                    debug.send("Collecting builds where a test started failing...");
+                    final HashSet<Run<?, ?>> buildsWhereATestStartedFailing = new HashSet<>();
+                    for (final TestResult caseResult : testResultAction.getFailedTests()) {
+                        final Run<?, ?> runWhereTestStartedFailing = caseResult.getFailedSinceRun();
+                        if (runWhereTestStartedFailing != null) {
+                            debug.send("  runWhereTestStartedFailing: %d", runWhereTestStartedFailing.getNumber());
+                            buildsWhereATestStartedFailing.add(runWhereTestStartedFailing);
+                        } else {
+                            context.getListener().error("getFailedSinceRun returned null for %s", caseResult.getFullDisplayName());
+                        }
+                    }
+                    // For each build where a test started failing, walk backward looking for build results worse than
+                    // UNSTABLE. All of those builds will be used to find suspects.
+                    debug.send("Collecting builds with suspects...");
+                    final HashSet<Run<?, ?>> buildsWithSuspects = new HashSet<>();
+                    for (final Run<?, ?> buildWhereATestStartedFailing : buildsWhereATestStartedFailing) {
+                        debug.send("  buildWhereATestStartedFailing: %d", buildWhereATestStartedFailing.getNumber());
+                        buildsWithSuspects.add(buildWhereATestStartedFailing);
+                        Run<?, ?> previousBuildToCheck = buildWhereATestStartedFailing.getPreviousCompletedBuild();
+                        if (previousBuildToCheck != null) {
+                            debug.send("    previousBuildToCheck: %d", previousBuildToCheck.getNumber());
+                        }
+                        while (previousBuildToCheck != null) {
+                            if (buildsWithSuspects.contains(previousBuildToCheck)) {
+                                // Short-circuit if the build to check has already been checked.
+                                debug.send("      already contained in buildsWithSuspects; stopping search");
+                                break;
+                            }
+                            final Result previousResult = previousBuildToCheck.getResult();
+                            if (previousResult == null) {
+                                debug.send("      previousResult was null");
+                            } else {
+                                debug.send("      previousResult: %s", previousResult.toString());
+                                if (previousResult.isBetterThan(Result.FAILURE)) {
+                                    debug.send("      previousResult was better than FAILURE; stopping search");
+                                    break;
+                                } else {
+                                    debug.send("      previousResult was not better than FAILURE; adding to buildsWithSuspects; continuing search");
+                                    buildsWithSuspects.add(previousBuildToCheck);
+                                    previousBuildToCheck = previousBuildToCheck.getPreviousCompletedBuild();
+                                    if (previousBuildToCheck != null) {
+                                        debug.send("    previousBuildToCheck: %d", previousBuildToCheck.getNumber());
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    debug.send("Collecting suspects...");
+                    users.addAll(RecipientProviderUtilities.getChangeSetAuthors(buildsWithSuspects, debug));
+                    users.addAll(RecipientProviderUtilities.getUsersTriggeringTheBuilds(buildsWithSuspects, debug));
+                }
+            }
+        }
+
+        if (users != null) {
+            RecipientProviderUtilities.addUsers(users, context.getListener(), env, to, cc, bcc, debug);
+        }
+    }
+FIXED VERSION:
+
+    public void addRecipients(final ExtendedEmailPublisherContext context, final EnvVars env,
+        final Set<InternetAddress> to, final Set<InternetAddress> cc, final Set<InternetAddress> bcc) {
+
+        final class Debug implements RecipientProviderUtilities.IDebug {
+            private final ExtendedEmailPublisherDescriptor descriptor
+                = Jenkins.getActiveInstance().getDescriptorByType(ExtendedEmailPublisherDescriptor.class);
+
+            private final PrintStream logger = context.getListener().getLogger();
+
+            public void send(final String format, final Object... args) {
+                descriptor.debug(logger, format, args);
+            }
+        }
+        final Debug debug = new Debug();
+
+        Set<User> users = null;
+
+        final Run<?, ?> currentRun = context.getRun();
+        if (currentRun == null) {
+            debug.send("currentRun was null");
+        } else {
+            final AbstractTestResultAction<?> testResultAction = currentRun.getAction(AbstractTestResultAction.class);
+            if (testResultAction == null) {
+                debug.send("testResultAction was null");
+            } else {
+                if (testResultAction.getFailCount() <= 0) {
+                    debug.send("getFailCount() returned <= 0");
+                } else {
+                    users = new HashSet<>();
+                    debug.send("Collecting builds where a test started failing...");
+                    final HashSet<Run<?, ?>> buildsWhereATestStartedFailing = new HashSet<>();
+                    for (final TestResult caseResult : testResultAction.getFailedTests()) {
+                        final Run<?, ?> runWhereTestStartedFailing = caseResult.getFailedSinceRun();
+                        if (runWhereTestStartedFailing != null) {
+                            debug.send("  runWhereTestStartedFailing: %d", runWhereTestStartedFailing.getNumber());
+                            buildsWhereATestStartedFailing.add(runWhereTestStartedFailing);
+                        } else {
+                            context.getListener().error("getFailedSinceRun returned null for %s", caseResult.getFullDisplayName());
+                        }
+                    }
+                    // For each build where a test started failing, walk backward looking for build results worse than
+                    // UNSTABLE. All of those builds will be used to find suspects.
+                    debug.send("Collecting builds with suspects...");
+                    final HashSet<Run<?, ?>> buildsWithSuspects = new HashSet<>();
+                    for (final Run<?, ?> buildWhereATestStartedFailing : buildsWhereATestStartedFailing) {
+                        debug.send("  buildWhereATestStartedFailing: %d", buildWhereATestStartedFailing.getNumber());
+                        buildsWithSuspects.add(buildWhereATestStartedFailing);
+                        Run<?, ?> previousBuildToCheck = buildWhereATestStartedFailing.getPreviousCompletedBuild();
+                        if (previousBuildToCheck != null) {
+                            debug.send("    previousBuildToCheck: %d", previousBuildToCheck.getNumber());
+                        }
+                        while (previousBuildToCheck != null) {
+                            if (buildsWithSuspects.contains(previousBuildToCheck)) {
+                                // Short-circuit if the build to check has already been checked.
+                                debug.send("      already contained in buildsWithSuspects; stopping search");
+                                break;
+                            }
+                            final Result previousResult = previousBuildToCheck.getResult();
+                            if (previousResult == null) {
+                                debug.send("      previousResult was null");
+                            } else {
+                                debug.send("      previousResult: %s", previousResult.toString());
+                                if (previousResult.isBetterThan(Result.FAILURE)) {
+                                    debug.send("      previousResult was better than FAILURE; stopping search");
+                                    break;
+                                } else {
+                                    debug.send("      previousResult was not better than FAILURE; adding to buildsWithSuspects; continuing search");
+                                    buildsWithSuspects.add(previousBuildToCheck);
+                                    previousBuildToCheck = previousBuildToCheck.getPreviousCompletedBuild();
+                                    if (previousBuildToCheck != null) {
+                                        debug.send("    previousBuildToCheck: %d", previousBuildToCheck.getNumber());
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    debug.send("Collecting suspects...");
+                    users.addAll(RecipientProviderUtilities.getChangeSetAuthors(buildsWithSuspects, debug));
+                    users.addAll(RecipientProviderUtilities.getUsersTriggeringTheBuilds(buildsWithSuspects, debug));
+                }
+            }
+        }
+
+        if (users != null) {
+            RecipientProviderUtilities.addUsers(users, context, env, to, cc, bcc, debug);
+        }
+    }
+================================================================================

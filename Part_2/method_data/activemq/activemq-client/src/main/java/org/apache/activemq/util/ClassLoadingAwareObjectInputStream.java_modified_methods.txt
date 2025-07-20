@@ -1,0 +1,14 @@
+Method: isAllAllowed
+VULNERABLE VERSION:
+
+
+    public static boolean isAllAllowed() {
+        return getSerialziablePackages().length == 1 && getSerialziablePackages()[0].equals("*");
+    }
+FIXED VERSION:
+
+
+    public static boolean isAllAllowed() {
+        return serializablePackages.length == 1 && serializablePackages[0].equals("*");
+    }
+================================================================================

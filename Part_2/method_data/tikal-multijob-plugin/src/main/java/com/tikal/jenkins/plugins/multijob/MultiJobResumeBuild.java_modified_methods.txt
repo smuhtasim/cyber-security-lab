@@ -1,0 +1,14 @@
+Method: getIconFileName
+VULNERABLE VERSION:
+
+
+    public String getIconFileName() {
+		return "plugin/jenkins-multijob-plugin/tool32.png";
+	}
+FIXED VERSION:
+
+
+    public String getIconFileName() {
+        return Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER) ? "plugin/jenkins-multijob-plugin/tool32.png" : null;
+	}
+================================================================================

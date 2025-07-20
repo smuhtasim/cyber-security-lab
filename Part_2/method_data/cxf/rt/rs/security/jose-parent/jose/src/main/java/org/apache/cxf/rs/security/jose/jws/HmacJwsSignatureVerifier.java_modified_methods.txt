@@ -1,0 +1,14 @@
+Method: verify
+VULNERABLE VERSION:
+
+    public boolean verify(JwsHeaders headers, String unsignedText, byte[] signature) {
+        byte[] expected = computeMac(headers, unsignedText);
+        return Arrays.equals(expected, signature);
+    }
+FIXED VERSION:
+
+    public boolean verify(JwsHeaders headers, String unsignedText, byte[] signature) {
+        byte[] expected = computeMac(headers, unsignedText);
+        return MessageDigest.isEqual(expected, signature);
+    }
+================================================================================

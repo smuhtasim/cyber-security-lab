@@ -1,0 +1,82 @@
+Method: createXStream
+VULNERABLE VERSION:
+
+    protected XStream createXStream() {
+        XStream xstream = null;
+        if (brokerContext != null) {
+            Map<String, XStream> beans = brokerContext.getBeansOfType(XStream.class);
+            for (XStream bean : beans.values()) {
+                if (bean != null) {
+                    xstream = bean;
+                    break;
+                }
+            }
+        }
+
+        if (xstream == null) {
+            xstream = new XStream();
+            xstream.ignoreUnknownElements();
+        }
+
+        // For any object whose elements contains an UTF8Buffer instance instead
+        // of a String type we map it to String both in and out such that we don't
+        // marshal UTF8Buffers out
+        xstream.registerConverter(new AbstractSingleValueConverter() {
+
+            @Override
+            public Object fromString(String str) {
+                return str;
+            }
+
+            @SuppressWarnings("rawtypes")
+            @Override
+            public boolean canConvert(Class type) {
+                return type.equals(UTF8Buffer.class);
+            }
+        });
+
+        xstream.alias("string", UTF8Buffer.class);
+
+        return xstream;
+    }
+FIXED VERSION:
+
+    protected XStream createXStream() {
+        XStream xstream = null;
+        if (brokerContext != null) {
+            Map<String, XStream> beans = brokerContext.getBeansOfType(XStream.class);
+            for (XStream bean : beans.values()) {
+                if (bean != null) {
+                    xstream = bean;
+                    break;
+                }
+            }
+        }
+
+        if (xstream == null) {
+            xstream = XStreamSupport.createXStream();
+            xstream.ignoreUnknownElements();
+        }
+
+        // For any object whose elements contains an UTF8Buffer instance instead
+        // of a String type we map it to String both in and out such that we don't
+        // marshal UTF8Buffers out
+        xstream.registerConverter(new AbstractSingleValueConverter() {
+
+            @Override
+            public Object fromString(String str) {
+                return str;
+            }
+
+            @SuppressWarnings("rawtypes")
+            @Override
+            public boolean canConvert(Class type) {
+                return type.equals(UTF8Buffer.class);
+            }
+        });
+
+        xstream.alias("string", UTF8Buffer.class);
+
+        return xstream;
+    }
+================================================================================

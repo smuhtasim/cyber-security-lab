@@ -1,0 +1,222 @@
+Method: doConnectionStatus
+VULNERABLE VERSION:
+
+    public HttpResponse doConnectionStatus(StaplerRequest request) {
+        Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
+        try {
+            String siteId = request.getParameter("siteId");
+            if (siteId == null) {
+                siteId = ID_DEFAULT;
+            } else if (siteId.equals("default")) {
+                // If the request explicitly requires the default ID, ship it
+                siteId = ID_DEFAULT;
+            }
+            ConnectionCheckJob checkJob = getConnectionCheckJob(siteId);
+            if (checkJob == null) {
+                UpdateSite site = getSite(siteId);
+                if (site != null) {
+                    checkJob = addConnectionCheckJob(site);
+                }
+            }
+            if (checkJob != null) {
+                boolean isOffline = false;
+                for (ConnectionStatus status : checkJob.connectionStates.values()) {
+                    if(ConnectionStatus.FAILED.equals(status)) {
+                        isOffline = true;
+                        break;
+                    }
+                }
+                if (isOffline) {
+                    // retry connection states if determined to be offline
+                    checkJob.run();
+                    isOffline = false;
+                    for (ConnectionStatus status : checkJob.connectionStates.values()) {
+                        if(ConnectionStatus.FAILED.equals(status)) {
+                            isOffline = true;
+                            break;
+                        }
+                    }
+                    if(!isOffline) { // also need to download the metadata
+                        updateAllSites();
+                    }
+                }
+                return HttpResponses.okJSON(checkJob.connectionStates);
+            } else {
+                return HttpResponses.errorJSON(String.format("Cannot check connection status of the update site with ID='%s'"
+                        + ". This update center cannot be resolved", siteId));
+            }
+        } catch (Exception e) {
+            return HttpResponses.errorJSON(String.format("ERROR: %s", e.getMessage()));
+        }
+    }
+FIXED VERSION:
+
+    public HttpResponse doConnectionStatus(StaplerRequest request) {
+        try {
+            String siteId = request.getParameter("siteId");
+            if (siteId == null) {
+                siteId = ID_DEFAULT;
+            } else if (siteId.equals("default")) {
+                // If the request explicitly requires the default ID, ship it
+                siteId = ID_DEFAULT;
+            }
+            ConnectionCheckJob checkJob = getConnectionCheckJob(siteId);
+            if (checkJob == null) {
+                UpdateSite site = getSite(siteId);
+                if (site != null) {
+                    checkJob = addConnectionCheckJob(site);
+                }
+            }
+            if (checkJob != null) {
+                boolean isOffline = false;
+                for (ConnectionStatus status : checkJob.connectionStates.values()) {
+                    if(ConnectionStatus.FAILED.equals(status)) {
+                        isOffline = true;
+                        break;
+                    }
+                }
+                if (isOffline) {
+                    // retry connection states if determined to be offline
+                    checkJob.run();
+                    isOffline = false;
+                    for (ConnectionStatus status : checkJob.connectionStates.values()) {
+                        if(ConnectionStatus.FAILED.equals(status)) {
+                            isOffline = true;
+                            break;
+                        }
+                    }
+                    if(!isOffline) { // also need to download the metadata
+                        updateAllSites();
+                    }
+                }
+                return HttpResponses.okJSON(checkJob.connectionStates);
+            } else {
+                return HttpResponses.errorJSON(String.format("Cannot check connection status of the update site with ID='%s'"
+                        + ". This update center cannot be resolved", siteId));
+            }
+        } catch (Exception e) {
+            return HttpResponses.errorJSON(String.format("ERROR: %s", e.getMessage()));
+        }
+    }
+================================================================================
+Method: doIncompleteInstallStatus
+VULNERABLE VERSION:
+
+    public HttpResponse doIncompleteInstallStatus() {
+        Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
+        try {
+        Map<String,String> jobs = InstallUtil.getPersistedInstallStatus();
+        if(jobs == null) {
+            jobs = Collections.emptyMap();
+        }
+            return HttpResponses.okJSON(jobs);
+        } catch (Exception e) {
+            return HttpResponses.errorJSON(String.format("ERROR: %s", e.getMessage()));
+        }
+    }
+FIXED VERSION:
+
+    public HttpResponse doIncompleteInstallStatus() {
+        try {
+        Map<String,String> jobs = InstallUtil.getPersistedInstallStatus();
+        if(jobs == null) {
+            jobs = Collections.emptyMap();
+        }
+            return HttpResponses.okJSON(jobs);
+        } catch (Exception e) {
+            return HttpResponses.errorJSON(String.format("ERROR: %s", e.getMessage()));
+        }
+    }
+================================================================================
+Method: doInstallStatus
+VULNERABLE VERSION:
+
+    public HttpResponse doInstallStatus(StaplerRequest request) {
+        Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
+        try {
+            String correlationId = request.getParameter("correlationId");
+            Map<String,Object> response = new HashMap<>();
+            response.put("state", Jenkins.getInstance().getInstallState().name());
+            List<Map<String, String>> installStates = new ArrayList<>();
+            response.put("jobs", installStates);
+            List<UpdateCenterJob> jobCopy = getJobs();
+
+            for (UpdateCenterJob job : jobCopy) {
+                if (job instanceof InstallationJob) {
+                    UUID jobCorrelationId = job.getCorrelationId();
+                    if (correlationId == null || (jobCorrelationId != null && correlationId.equals(jobCorrelationId.toString()))) {
+                        InstallationJob installationJob = (InstallationJob) job;
+                        Map<String, String> pluginInfo = new LinkedHashMap<>();
+                        pluginInfo.put("name", installationJob.plugin.name);
+                        pluginInfo.put("version", installationJob.plugin.version);
+                        pluginInfo.put("title", installationJob.plugin.title);
+                        pluginInfo.put("installStatus", installationJob.status.getType());
+                        pluginInfo.put("requiresRestart", Boolean.toString(installationJob.status.requiresRestart()));
+                        if (jobCorrelationId != null) {
+                            pluginInfo.put("correlationId", jobCorrelationId.toString());
+                        }
+                        installStates.add(pluginInfo);
+                    }
+                }
+            }
+            return HttpResponses.okJSON(JSONObject.fromObject(response));
+        } catch (Exception e) {
+            return HttpResponses.errorJSON(String.format("ERROR: %s", e.getMessage()));
+        }
+    }
+FIXED VERSION:
+
+    public HttpResponse doInstallStatus(StaplerRequest request) {
+        try {
+            String correlationId = request.getParameter("correlationId");
+            Map<String,Object> response = new HashMap<>();
+            response.put("state", Jenkins.getInstance().getInstallState().name());
+            List<Map<String, String>> installStates = new ArrayList<>();
+            response.put("jobs", installStates);
+            List<UpdateCenterJob> jobCopy = getJobs();
+
+            for (UpdateCenterJob job : jobCopy) {
+                if (job instanceof InstallationJob) {
+                    UUID jobCorrelationId = job.getCorrelationId();
+                    if (correlationId == null || (jobCorrelationId != null && correlationId.equals(jobCorrelationId.toString()))) {
+                        InstallationJob installationJob = (InstallationJob) job;
+                        Map<String, String> pluginInfo = new LinkedHashMap<>();
+                        pluginInfo.put("name", installationJob.plugin.name);
+                        pluginInfo.put("version", installationJob.plugin.version);
+                        pluginInfo.put("title", installationJob.plugin.title);
+                        pluginInfo.put("installStatus", installationJob.status.getType());
+                        pluginInfo.put("requiresRestart", Boolean.toString(installationJob.status.requiresRestart()));
+                        if (jobCorrelationId != null) {
+                            pluginInfo.put("correlationId", jobCorrelationId.toString());
+                        }
+                        installStates.add(pluginInfo);
+                    }
+                }
+            }
+            return HttpResponses.okJSON(JSONObject.fromObject(response));
+        } catch (Exception e) {
+            return HttpResponses.errorJSON(String.format("ERROR: %s", e.getMessage()));
+        }
+    }
+================================================================================
+Method: doInvalidateData
+VULNERABLE VERSION:
+
+    public HttpResponse doInvalidateData() {
+        Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
+        for (UpdateSite site : sites) {
+            site.doInvalidateData();
+        }
+
+        return HttpResponses.ok();
+    }
+FIXED VERSION:
+
+    public HttpResponse doInvalidateData() {
+        for (UpdateSite site : sites) {
+            site.doInvalidateData();
+        }
+
+        return HttpResponses.ok();
+    }
+================================================================================

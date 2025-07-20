@@ -1,0 +1,20 @@
+Method: RefreshPayload
+VULNERABLE VERSION:
+
+
+		public RefreshPayload(int index, AjaxRequestTarget target)
+		{
+			super(target);
+
+			this.index = index;
+		}
+FIXED VERSION:
+
+
+		public RefreshPayload(int index, IPartialPageRequestHandler handler)
+		{
+			super(handler);
+
+			this.index = index;
+		}
+================================================================================

@@ -1,0 +1,95 @@
+Method: recycle
+VULNERABLE VERSION:
+
+    public void recycle() {
+        remaining = 0;
+        pos = 0;
+        lastValid = 0;
+        endChunk = false;
+        needCRLFParse = false;
+        trailingHeaders.recycle();
+        trailingHeaders.setLimit(maxTrailerSize);
+        extensionSize = 0;
+    }
+FIXED VERSION:
+
+    public void recycle() {
+        remaining = 0;
+        pos = 0;
+        lastValid = 0;
+        endChunk = false;
+        needCRLFParse = false;
+        trailingHeaders.recycle();
+        trailingHeaders.setLimit(maxTrailerSize);
+        extensionSize = 0;
+        error = false;
+    }
+================================================================================
+Method: if
+VULNERABLE VERSION:
+ needed
+            if (pos >= lastValid) {
+                if (readBytes() <0)
+                    throw new EOFException("Unexpected end of stream whilst reading trailer headers for chunked request");
+            }
+FIXED VERSION:
+ needed
+            if (pos >= lastValid) {
+                if (readBytes() <0) {
+                    throwEOFException(sm.getString("chunkedInputFilter.eosTrailer"));
+                }
+            }
+================================================================================
+Method: while
+VULNERABLE VERSION:
+ line
+            while (!eol) {
+
+                // Read new bytes if needed
+                if (pos >= lastValid) {
+                    if (readBytes() <0)
+                        throw new EOFException("Unexpected end of stream whilst reading trailer headers for chunked request");
+                }
+
+                chr = buf[pos];
+                if (chr == Constants.CR || chr == Constants.LF) {
+                    parseCRLF(true);
+                    eol = true;
+                } else if (chr == Constants.SP) {
+                    trailingHeaders.append(chr);
+                } else {
+                    trailingHeaders.append(chr);
+                    lastSignificantChar = trailingHeaders.getEnd();
+                }
+
+                if (!eol) {
+                    pos++;
+                }
+            }
+FIXED VERSION:
+ line
+            while (!eol) {
+
+                // Read new bytes if needed
+                if (pos >= lastValid) {
+                    if (readBytes() <0) {
+                        throwEOFException(sm.getString("chunkedInputFilter.eosTrailer"));
+                    }
+                }
+
+                chr = buf[pos];
+                if (chr == Constants.CR || chr == Constants.LF) {
+                    parseCRLF(true);
+                    eol = true;
+                } else if (chr == Constants.SP) {
+                    trailingHeaders.append(chr);
+                } else {
+                    trailingHeaders.append(chr);
+                    lastSignificantChar = trailingHeaders.getEnd();
+                }
+
+                if (!eol) {
+                    pos++;
+                }
+            }
+================================================================================

@@ -1,0 +1,186 @@
+Method: DefaultHttpBinding
+VULNERABLE VERSION:
+
+
+    public DefaultHttpBinding(HttpEndpoint endpoint) {
+        this.endpoint = endpoint;
+        this.headerFilterStrategy = endpoint.getHeaderFilterStrategy();
+        this.allowJavaSerializedObject = endpoint.getComponent().isAllowJavaSerializedObject();
+    }
+FIXED VERSION:
+
+
+    public DefaultHttpBinding(HttpEndpoint endpoint) {
+        this.endpoint = endpoint;
+        this.headerFilterStrategy = endpoint.getHeaderFilterStrategy();
+        if (endpoint.getComponent() != null) {
+            this.allowJavaSerializedObject = endpoint.getComponent().isAllowJavaSerializedObject();
+        }
+    }
+================================================================================
+Method: readRequest
+VULNERABLE VERSION:
+
+
+    public void readRequest(HttpServletRequest request, HttpMessage message) {
+        LOG.trace("readRequest {}", request);
+        
+        // lets force a parse of the body and headers
+        message.getBody();
+        // populate the headers from the request
+        Map<String, Object> headers = message.getHeaders();
+        
+        //apply the headerFilterStrategy
+        Enumeration<?> names = request.getHeaderNames();
+        while (names.hasMoreElements()) {
+            String name = (String)names.nextElement();
+            String value = request.getHeader(name);
+            // use http helper to extract parameter value as it may contain multiple values
+            Object extracted = HttpHelper.extractHttpParameterValue(value);
+            // mapping the content-type
+            if (name.toLowerCase().equals("content-type")) {
+                name = Exchange.CONTENT_TYPE;
+            }
+            if (headerFilterStrategy != null
+                && !headerFilterStrategy.applyFilterToExternalHeaders(name, extracted, message.getExchange())) {
+                HttpHelper.appendHeader(headers, name, extracted);
+            }
+        }
+                
+        if (request.getCharacterEncoding() != null) {
+            headers.put(Exchange.HTTP_CHARACTER_ENCODING, request.getCharacterEncoding());
+            message.getExchange().setProperty(Exchange.CHARSET_NAME, request.getCharacterEncoding());
+        }
+
+        try {
+            populateRequestParameters(request, message);
+        } catch (Exception e) {
+            throw new RuntimeCamelException("Cannot read request parameters due " + e.getMessage(), e);
+        }
+        
+        Object body = message.getBody();
+        // reset the stream cache if the body is the instance of StreamCache
+        if (body instanceof StreamCache) {
+            ((StreamCache)body).reset();
+        }
+
+        // store the method and query and other info in headers as String types
+        headers.put(Exchange.HTTP_METHOD, request.getMethod());
+        headers.put(Exchange.HTTP_QUERY, request.getQueryString());
+        headers.put(Exchange.HTTP_URL, request.getRequestURL().toString());
+        headers.put(Exchange.HTTP_URI, request.getRequestURI());
+        headers.put(Exchange.HTTP_PATH, request.getPathInfo());
+        headers.put(Exchange.CONTENT_TYPE, request.getContentType());
+
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("HTTP method {}", request.getMethod());
+            LOG.trace("HTTP query {}", request.getQueryString());
+            LOG.trace("HTTP url {}", request.getRequestURL());
+            LOG.trace("HTTP uri {}", request.getRequestURI().toString());
+            LOG.trace("HTTP path {}", request.getPathInfo());
+            LOG.trace("HTTP content-type {}", request.getContentType());
+        }
+
+        // if content type is serialized java object, then de-serialize it to a Java object
+        if (request.getContentType() != null && HttpConstants.CONTENT_TYPE_JAVA_SERIALIZED_OBJECT.equals(request.getContentType())) {
+            if (allowJavaSerializedObject || endpoint.isTransferException()) {
+                try {
+                    InputStream is = endpoint.getCamelContext().getTypeConverter().mandatoryConvertTo(InputStream.class, body);
+                    Object object = HttpHelper.deserializeJavaObjectFromStream(is);
+                    if (object != null) {
+                        message.setBody(object);
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeCamelException("Cannot deserialize body to Java object", e);
+                }
+            } else {
+                throw new RuntimeCamelException("Content-type " + HttpConstants.CONTENT_TYPE_JAVA_SERIALIZED_OBJECT + " is not allowed");
+            }
+        }
+        
+        populateAttachments(request, message);
+    }
+FIXED VERSION:
+
+
+    public void readRequest(HttpServletRequest request, HttpMessage message) {
+        LOG.trace("readRequest {}", request);
+        
+        // lets force a parse of the body and headers
+        message.getBody();
+        // populate the headers from the request
+        Map<String, Object> headers = message.getHeaders();
+        
+        //apply the headerFilterStrategy
+        Enumeration<?> names = request.getHeaderNames();
+        while (names.hasMoreElements()) {
+            String name = (String)names.nextElement();
+            String value = request.getHeader(name);
+            // use http helper to extract parameter value as it may contain multiple values
+            Object extracted = HttpHelper.extractHttpParameterValue(value);
+            // mapping the content-type
+            if (name.toLowerCase().equals("content-type")) {
+                name = Exchange.CONTENT_TYPE;
+            }
+            if (headerFilterStrategy != null
+                && !headerFilterStrategy.applyFilterToExternalHeaders(name, extracted, message.getExchange())) {
+                HttpHelper.appendHeader(headers, name, extracted);
+            }
+        }
+                
+        if (request.getCharacterEncoding() != null) {
+            headers.put(Exchange.HTTP_CHARACTER_ENCODING, request.getCharacterEncoding());
+            message.getExchange().setProperty(Exchange.CHARSET_NAME, request.getCharacterEncoding());
+        }
+
+        try {
+            populateRequestParameters(request, message);
+        } catch (Exception e) {
+            throw new RuntimeCamelException("Cannot read request parameters due " + e.getMessage(), e);
+        }
+        
+        Object body = message.getBody();
+        // reset the stream cache if the body is the instance of StreamCache
+        if (body instanceof StreamCache) {
+            ((StreamCache)body).reset();
+        }
+
+        // store the method and query and other info in headers as String types
+        headers.put(Exchange.HTTP_METHOD, request.getMethod());
+        headers.put(Exchange.HTTP_QUERY, request.getQueryString());
+        headers.put(Exchange.HTTP_URL, request.getRequestURL().toString());
+        headers.put(Exchange.HTTP_URI, request.getRequestURI());
+        headers.put(Exchange.HTTP_PATH, request.getPathInfo());
+        headers.put(Exchange.CONTENT_TYPE, request.getContentType());
+
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("HTTP method {}", request.getMethod());
+            LOG.trace("HTTP query {}", request.getQueryString());
+            LOG.trace("HTTP url {}", request.getRequestURL());
+            LOG.trace("HTTP uri {}", request.getRequestURI().toString());
+            LOG.trace("HTTP path {}", request.getPathInfo());
+            LOG.trace("HTTP content-type {}", request.getContentType());
+        }
+
+        // if content type is serialized java object, then de-serialize it to a Java object
+        if (request.getContentType() != null && HttpConstants.CONTENT_TYPE_JAVA_SERIALIZED_OBJECT.equals(request.getContentType())) {
+            // only deserialize java if allowed
+            if (allowJavaSerializedObject || endpoint.isTransferException()) {
+                try {
+                    InputStream is = endpoint.getCamelContext().getTypeConverter().mandatoryConvertTo(InputStream.class, body);
+                    Object object = HttpHelper.deserializeJavaObjectFromStream(is);
+                    if (object != null) {
+                        message.setBody(object);
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeCamelException("Cannot deserialize body to Java object", e);
+                }
+            } else {
+                // set empty body
+                message.setBody(null);
+            }
+        }
+        
+        populateAttachments(request, message);
+    }
+================================================================================

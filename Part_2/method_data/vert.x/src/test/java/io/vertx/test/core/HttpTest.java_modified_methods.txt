@@ -1,0 +1,14 @@
+Method: createBaseServerOptions
+VULNERABLE VERSION:
+
+    
+  protected HttpServerOptions createBaseServerOptions() {
+    return new HttpServerOptions().setPort(DEFAULT_HTTP_PORT).setHost(DEFAULT_HTTP_HOST);
+  }
+FIXED VERSION:
+
+
+  protected HttpServerOptions createBaseServerOptions() {
+    return new HttpServerOptions().setPort(DEFAULT_HTTP_PORT).setHost(DEFAULT_HTTP_HOST);
+  }
+================================================================================

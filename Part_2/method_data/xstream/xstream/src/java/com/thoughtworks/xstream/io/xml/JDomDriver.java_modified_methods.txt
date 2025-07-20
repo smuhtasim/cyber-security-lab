@@ -1,0 +1,30 @@
+Method: createReader
+VULNERABLE VERSION:
+
+
+    public HierarchicalStreamReader createReader(File in) {
+        try {
+            SAXBuilder builder = new SAXBuilder();
+            Document document = builder.build(in);
+            return new JDomReader(document, getNameCoder());
+        } catch (IOException e) {
+            throw new StreamException(e);
+        } catch (JDOMException e) {
+            throw new StreamException(e);
+        }
+    }
+FIXED VERSION:
+
+
+    public HierarchicalStreamReader createReader(File in) {
+        try {
+            final SAXBuilder builder = createBuilder();
+            final Document document = builder.build(in);
+            return new JDomReader(document, getNameCoder());
+        } catch (IOException e) {
+            throw new StreamException(e);
+        } catch (JDOMException e) {
+            throw new StreamException(e);
+        }
+    }
+================================================================================

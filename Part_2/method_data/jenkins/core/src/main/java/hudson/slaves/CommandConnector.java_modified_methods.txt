@@ -1,0 +1,13 @@
+Method: CommandConnector
+VULNERABLE VERSION:
+
+    public CommandConnector(String command) {
+        this.command = command;
+    }
+FIXED VERSION:
+
+    public CommandConnector(String command) {
+        this.command = command;
+        Jenkins.getInstance().checkPermission(Jenkins.RUN_SCRIPTS);
+    }
+================================================================================

@@ -1,0 +1,13 @@
+Method: SaltGenerator
+VULNERABLE VERSION:
+
+
+    private SaltGenerator() {
+    }
+FIXED VERSION:
+
+
+    private SaltGenerator() {
+        // private constructor for static utility class
+    }
+================================================================================

@@ -1,0 +1,17 @@
+Method: getAuthorizationID
+VULNERABLE VERSION:
+
+    public String getAuthorizationID() {
+        if (!isComplete())
+            throw new IllegalStateException("Authentication exchange has not completed");
+        String authzId = clientFirstMessage.authorizationId();
+        return authzId == null || authzId.length() == 0 ? username : authzId;
+    }
+FIXED VERSION:
+
+    public String getAuthorizationID() {
+        if (!isComplete())
+            throw new IllegalStateException("Authentication exchange has not completed");
+        return username;
+    }
+================================================================================

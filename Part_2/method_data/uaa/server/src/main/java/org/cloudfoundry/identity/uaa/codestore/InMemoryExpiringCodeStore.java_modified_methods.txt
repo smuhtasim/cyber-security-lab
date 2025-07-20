@@ -1,0 +1,94 @@
+Method: generateCode
+VULNERABLE VERSION:
+
+    public ExpiringCode generateCode(String data, Timestamp expiresAt, String intent) {
+        if (data == null || expiresAt == null) {
+            throw new NullPointerException();
+        }
+
+        if (expiresAt.getTime() < System.currentTimeMillis()) {
+            throw new IllegalArgumentException();
+        }
+
+        String code = generator.generate();
+
+        ExpiringCode expiringCode = new ExpiringCode(code, expiresAt, data, intent);
+
+        ExpiringCode duplicate = store.putIfAbsent(code, expiringCode);
+        if (duplicate != null) {
+            throw new DataIntegrityViolationException("Duplicate code: " + code);
+        }
+
+        return expiringCode;
+    }
+FIXED VERSION:
+
+    public ExpiringCode generateCode(String data, Timestamp expiresAt, String intent) {
+        if (data == null || expiresAt == null) {
+            throw new NullPointerException();
+        }
+
+        if (expiresAt.getTime() < System.currentTimeMillis()) {
+            throw new IllegalArgumentException();
+        }
+
+        String code = generator.generate();
+
+        ExpiringCode expiringCode = new ExpiringCode(code, expiresAt, data, intent);
+
+        ExpiringCode duplicate = store.putIfAbsent(zonifyCode(code), expiringCode);
+        if (duplicate != null) {
+            throw new DataIntegrityViolationException("Duplicate code: " + code);
+        }
+
+        return expiringCode;
+    }
+================================================================================
+Method: retrieveCode
+VULNERABLE VERSION:
+
+    public ExpiringCode retrieveCode(String code) {
+        if (code == null) {
+            throw new NullPointerException();
+        }
+
+        ExpiringCode expiringCode = store.remove(code);
+
+        if (expiringCode == null || expiringCode.getExpiresAt().getTime() < System.currentTimeMillis()) {
+            expiringCode = null;
+        }
+
+        return expiringCode;
+    }
+FIXED VERSION:
+
+    public ExpiringCode retrieveCode(String code) {
+        if (code == null) {
+            throw new NullPointerException();
+        }
+
+        ExpiringCode expiringCode = store.remove(zonifyCode(code));
+
+        if (expiringCode == null || expiringCode.getExpiresAt().getTime() < System.currentTimeMillis()) {
+            expiringCode = null;
+        }
+
+        return expiringCode;
+    }
+================================================================================
+Method: expireByIntent
+VULNERABLE VERSION:
+
+    public void expireByIntent(String intent) {
+        Assert.hasText(intent);
+
+        store.values().stream().filter(c -> intent.equals(c.getIntent())).forEach(c -> store.remove(c.getCode()));
+    }
+FIXED VERSION:
+
+    public void expireByIntent(String intent) {
+        Assert.hasText(intent);
+        String id = IdentityZoneHolder.get().getId();
+        store.entrySet().stream().filter(c -> c.getKey().contains(id) && intent.equals(c.getValue().getIntent())).forEach(c -> store.remove(c.getKey()));
+    }
+================================================================================

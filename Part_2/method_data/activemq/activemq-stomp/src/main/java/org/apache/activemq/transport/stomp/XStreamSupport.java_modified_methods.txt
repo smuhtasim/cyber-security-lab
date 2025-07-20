@@ -1,0 +1,40 @@
+Method: createXStream
+VULNERABLE VERSION:
+
+
+    public static XStream createXStream() {
+        XStream stream = new XStream();
+        stream.addPermission(NoTypePermission.NONE);
+        stream.addPermission(PrimitiveTypePermission.PRIMITIVES);
+        stream.allowTypeHierarchy(Collection.class);
+        stream.allowTypeHierarchy(Map.class);
+        stream.allowTypes(new Class[]{String.class});
+        if (ClassLoadingAwareObjectInputStream.isAllAllowed()) {
+            stream.addPermission(AnyTypePermission.ANY);
+        } else {
+            for (String packageName : ClassLoadingAwareObjectInputStream.getSerialziablePackages()) {
+                stream.allowTypesByWildcard(new String[]{packageName + ".**"});
+            }
+        }
+        return stream;
+    }
+FIXED VERSION:
+
+
+    public static XStream createXStream() {
+        XStream stream = new XStream();
+        stream.addPermission(NoTypePermission.NONE);
+        stream.addPermission(PrimitiveTypePermission.PRIMITIVES);
+        stream.allowTypeHierarchy(Collection.class);
+        stream.allowTypeHierarchy(Map.class);
+        stream.allowTypes(new Class[]{String.class});
+        if (ClassLoadingAwareObjectInputStream.isAllAllowed()) {
+            stream.addPermission(AnyTypePermission.ANY);
+        } else {
+            for (String packageName : ClassLoadingAwareObjectInputStream.serializablePackages) {
+                stream.allowTypesByWildcard(new String[]{packageName + ".**"});
+            }
+        }
+        return stream;
+    }
+================================================================================

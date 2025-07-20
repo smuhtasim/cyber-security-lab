@@ -1,0 +1,20 @@
+Method: setSharedObject
+VULNERABLE VERSION:
+ void setSharedObject(Class<C> sharedType, C object) {
+		this.sharedObjects.put((Class<Object>) sharedType, object);
+	}
+FIXED VERSION:
+ void setSharedObject(Class<C> sharedType, C object) {
+		this.sharedObjects.put(sharedType, object);
+	}
+================================================================================
+Method: postProcess
+VULNERABLE VERSION:
+ P postProcess(P object) {
+		return (P) this.objectPostProcessor.postProcess(object);
+	}
+FIXED VERSION:
+ P postProcess(P object) {
+		return this.objectPostProcessor.postProcess(object);
+	}
+================================================================================

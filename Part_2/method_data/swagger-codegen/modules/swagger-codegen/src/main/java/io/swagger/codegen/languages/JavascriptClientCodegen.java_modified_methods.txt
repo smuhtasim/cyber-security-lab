@@ -1,0 +1,138 @@
+Method: preprocessSwagger
+VULNERABLE VERSION:
+
+    public void preprocessSwagger(Swagger swagger) {
+        super.preprocessSwagger(swagger);
+
+        if (swagger.getInfo() != null) {
+            Info info = swagger.getInfo();
+            if (StringUtils.isBlank(projectName) && info.getTitle() != null) {
+                // when projectName is not specified, generate it from info.title
+                projectName = dashize(info.getTitle());
+            }
+            if (StringUtils.isBlank(projectVersion)) {
+                // when projectVersion is not specified, use info.version
+                projectVersion = info.getVersion();
+            }
+            if (projectDescription == null) {
+                // when projectDescription is not specified, use info.description
+                projectDescription = info.getDescription();
+            }
+            if (additionalProperties.get(PROJECT_LICENSE_NAME) == null) {
+                // when projectLicense is not specified, use info.license
+                if (info.getLicense() != null) {
+                    License license = info.getLicense();
+                    additionalProperties.put(PROJECT_LICENSE_NAME, license.getName());
+                }
+            }
+        }
+
+        // default values
+        if (StringUtils.isBlank(projectName)) {
+            projectName = "swagger-js-client";
+        }
+        if (StringUtils.isBlank(moduleName)) {
+            moduleName = camelize(underscore(projectName));
+        }
+        if (StringUtils.isBlank(projectVersion)) {
+            projectVersion = "1.0.0";
+        }
+        if (projectDescription == null) {
+            projectDescription = "Client library of " + projectName;
+        }
+
+        additionalProperties.put(PROJECT_NAME, projectName);
+        additionalProperties.put(MODULE_NAME, moduleName);
+        additionalProperties.put(PROJECT_DESCRIPTION, escapeText(projectDescription));
+        additionalProperties.put(PROJECT_VERSION, projectVersion);
+        additionalProperties.put(CodegenConstants.API_PACKAGE, apiPackage);
+        additionalProperties.put(CodegenConstants.INVOKER_PACKAGE, invokerPackage);
+        additionalProperties.put(CodegenConstants.LOCAL_VARIABLE_PREFIX, localVariablePrefix);
+        additionalProperties.put(CodegenConstants.MODEL_PACKAGE, modelPackage);
+        additionalProperties.put(CodegenConstants.SOURCE_FOLDER, sourceFolder);
+        additionalProperties.put(USE_PROMISES, usePromises);
+        additionalProperties.put(USE_INHERITANCE, supportsInheritance);
+        additionalProperties.put(EMIT_MODEL_METHODS, emitModelMethods);
+        additionalProperties.put(EMIT_JS_DOC, emitJSDoc);
+
+        // make api and model doc path available in mustache template
+        additionalProperties.put("apiDocPath", apiDocPath);
+        additionalProperties.put("modelDocPath", modelDocPath);
+
+        supportingFiles.add(new SupportingFile("package.mustache", "", "package.json"));
+        supportingFiles.add(new SupportingFile("index.mustache", createPath(sourceFolder, invokerPackage), "index.js"));
+        supportingFiles.add(new SupportingFile("ApiClient.mustache", createPath(sourceFolder, invokerPackage), "ApiClient.js"));
+        supportingFiles.add(new SupportingFile("git_push.sh.mustache", "", "git_push.sh"));
+        supportingFiles.add(new SupportingFile("README.mustache", "", "README.md"));
+        supportingFiles.add(new SupportingFile("mocha.opts", "", "mocha.opts"));
+        supportingFiles.add(new SupportingFile("travis.yml", "", ".travis.yml"));
+    }
+FIXED VERSION:
+
+    public void preprocessSwagger(Swagger swagger) {
+        super.preprocessSwagger(swagger);
+
+        if (swagger.getInfo() != null) {
+            Info info = swagger.getInfo();
+            if (StringUtils.isBlank(projectName) && info.getTitle() != null) {
+                // when projectName is not specified, generate it from info.title
+                projectName = sanitizeName(dashize(info.getTitle()));
+            }
+            if (StringUtils.isBlank(projectVersion)) {
+                // when projectVersion is not specified, use info.version
+                projectVersion = escapeUnsafeCharacters(escapeQuotationMark(info.getVersion()));
+            }
+            if (projectDescription == null) {
+                // when projectDescription is not specified, use info.description
+                projectDescription = sanitizeName(info.getDescription());
+            }
+            if (additionalProperties.get(PROJECT_LICENSE_NAME) == null) {
+                // when projectLicense is not specified, use info.license
+                if (info.getLicense() != null) {
+                    License license = info.getLicense();
+                    additionalProperties.put(PROJECT_LICENSE_NAME, sanitizeName(license.getName()));
+                }
+            }
+        }
+
+        // default values
+        if (StringUtils.isBlank(projectName)) {
+            projectName = "swagger-js-client";
+        }
+        if (StringUtils.isBlank(moduleName)) {
+            moduleName = camelize(underscore(projectName));
+        }
+        if (StringUtils.isBlank(projectVersion)) {
+            projectVersion = "1.0.0";
+        }
+        if (projectDescription == null) {
+            projectDescription = "Client library of " + projectName;
+        }
+
+        additionalProperties.put(PROJECT_NAME, projectName);
+        additionalProperties.put(MODULE_NAME, moduleName);
+        additionalProperties.put(PROJECT_DESCRIPTION, escapeText(projectDescription));
+        additionalProperties.put(PROJECT_VERSION, projectVersion);
+        additionalProperties.put(CodegenConstants.API_PACKAGE, apiPackage);
+        additionalProperties.put(CodegenConstants.INVOKER_PACKAGE, invokerPackage);
+        additionalProperties.put(CodegenConstants.LOCAL_VARIABLE_PREFIX, localVariablePrefix);
+        additionalProperties.put(CodegenConstants.MODEL_PACKAGE, modelPackage);
+        additionalProperties.put(CodegenConstants.SOURCE_FOLDER, sourceFolder);
+        additionalProperties.put(USE_PROMISES, usePromises);
+        additionalProperties.put(USE_INHERITANCE, supportsInheritance);
+        additionalProperties.put(EMIT_MODEL_METHODS, emitModelMethods);
+        additionalProperties.put(EMIT_JS_DOC, emitJSDoc);
+
+        // make api and model doc path available in mustache template
+        additionalProperties.put("apiDocPath", apiDocPath);
+        additionalProperties.put("modelDocPath", modelDocPath);
+
+        supportingFiles.add(new SupportingFile("package.mustache", "", "package.json"));
+        supportingFiles.add(new SupportingFile("index.mustache", createPath(sourceFolder, invokerPackage), "index.js"));
+        supportingFiles.add(new SupportingFile("ApiClient.mustache", createPath(sourceFolder, invokerPackage), "ApiClient.js"));
+        supportingFiles.add(new SupportingFile("git_push.sh.mustache", "", "git_push.sh"));
+        supportingFiles.add(new SupportingFile("README.mustache", "", "README.md"));
+        supportingFiles.add(new SupportingFile("mocha.opts", "", "mocha.opts"));
+        supportingFiles.add(new SupportingFile("travis.yml", "", ".travis.yml"));
+    }
+================================================================================

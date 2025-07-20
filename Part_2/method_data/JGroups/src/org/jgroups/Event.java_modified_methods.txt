@@ -1,0 +1,22 @@
+Method: getType
+VULNERABLE VERSION:
+ int getType() {
+        return type;
+    }
+FIXED VERSION:
+ int             getType() {
+        return type;
+    }
+================================================================================
+Method: getArg
+VULNERABLE VERSION:
+
+
+
+    public Object getArg() {
+        return arg;
+    }
+FIXED VERSION:
+
+    public Object                getArg()  {return arg;}
+================================================================================

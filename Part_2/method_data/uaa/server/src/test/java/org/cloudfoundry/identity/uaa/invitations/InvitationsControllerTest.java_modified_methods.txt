@@ -1,0 +1,27 @@
+Method: startAcceptInviteFlow
+VULNERABLE VERSION:
+
+
+    private MockHttpServletRequestBuilder startAcceptInviteFlow(String password) {
+        UaaPrincipal uaaPrincipal = new UaaPrincipal("user-id-001", "user@example.com", "user@example.com", OriginKeys.UAA, null, IdentityZoneHolder.get().getId());
+        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(uaaPrincipal, null, UaaAuthority.USER_AUTHORITIES);
+        SecurityContextHolder.getContext().setAuthentication(token);
+
+        return post("/invitations/accept.do")
+            .param("code","thecode")
+            .param("password", password)
+            .param("password_confirmation", password);
+    }
+FIXED VERSION:
+
+    private MockHttpServletRequestBuilder startAcceptInviteFlow(String password, String confirmPassword) {
+        UaaPrincipal uaaPrincipal = new UaaPrincipal("user-id-001", "user@example.com", "user@example.com", OriginKeys.UAA, null, IdentityZoneHolder.get().getId());
+        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(uaaPrincipal, null, UaaAuthority.USER_AUTHORITIES);
+        SecurityContextHolder.getContext().setAuthentication(token);
+
+        return post("/invitations/accept.do")
+            .param("code","thecode")
+            .param("password", password)
+            .param("password_confirmation", confirmPassword);
+    }
+================================================================================

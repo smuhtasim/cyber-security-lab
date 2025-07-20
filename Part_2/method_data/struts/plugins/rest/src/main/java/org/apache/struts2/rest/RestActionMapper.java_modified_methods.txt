@@ -1,0 +1,12 @@
+Method: RestActionMapper
+VULNERABLE VERSION:
+    
+    
+    public RestActionMapper() {
+    }
+FIXED VERSION:
+
+    
+    public RestActionMapper() {
+    }
+================================================================================

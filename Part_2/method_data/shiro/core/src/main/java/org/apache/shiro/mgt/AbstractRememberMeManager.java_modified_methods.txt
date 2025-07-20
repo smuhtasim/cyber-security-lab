@@ -1,0 +1,17 @@
+Method: AbstractRememberMeManager
+VULNERABLE VERSION:
+
+    public AbstractRememberMeManager() {
+        this.serializer = new DefaultSerializer<PrincipalCollection>();
+        this.cipherService = new AesCipherService();
+        setCipherKey(DEFAULT_CIPHER_KEY_BYTES);
+    }
+FIXED VERSION:
+
+    public AbstractRememberMeManager() {
+        this.serializer = new DefaultSerializer<PrincipalCollection>();
+        AesCipherService cipherService = new AesCipherService();
+        this.cipherService = cipherService;
+        setCipherKey(cipherService.generateNewKey().getEncoded());
+    }
+================================================================================

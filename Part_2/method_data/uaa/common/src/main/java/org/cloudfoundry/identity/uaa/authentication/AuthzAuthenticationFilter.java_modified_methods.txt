@@ -1,0 +1,18 @@
+Method: setMethods
+VULNERABLE VERSION:
+
+    public void setMethods(Set<String> methods) {
+        this.methods = new HashSet<String>();
+        for (String method : methods) {
+            this.methods.add(method.toUpperCase());
+        }
+    }
+FIXED VERSION:
+
+    public void setMethods(Set<String> methods) {
+        this.methods = new HashSet<>();
+        for (String method : methods) {
+            this.methods.add(method.toUpperCase());
+        }
+    }
+================================================================================

@@ -1,0 +1,54 @@
+Method: validateMAC
+VULNERABLE VERSION:
+
+	public boolean validateMAC(SecretKey authKey) {
+	    boolean usesMAC = ESAPI.securityConfiguration().useMACforCipherText();
+
+	    if (  usesMAC && macComputed() ) {  // Uses MAC and it was computed
+	        // Calculate MAC from HMAC-SHA1(nonce, IV + plaintext) and
+	        // compare to stored value (separate_mac_). If same, then return true,
+	        // else return false.
+	        byte[] mac = computeMAC(authKey);
+	        assert mac.length == separate_mac_.length : "MACs are of differnt lengths. Should both be the same.";
+	        return CryptoHelper.arrayCompare(mac, separate_mac_); // Safe compare!!!
+	    } else if ( ! usesMAC ) {           // Doesn't use MAC
+	        return true;
+	    } else {                            // Uses MAC but it has not been computed / stored.
+	        logger.warning(Logger.SECURITY_FAILURE, "Cannot validate MAC as it was never computed and stored. " +
+	        "Decryption result may be garbage even when decryption succeeds.");
+	        return true;    // Need to return 'true' here because of encrypt() / decrypt() methods don't support this.
+	    }
+	}
+FIXED VERSION:
+
+	public boolean validateMAC(SecretKey authKey) {
+	    boolean requiresMAC = ESAPI.securityConfiguration().useMACforCipherText();
+
+	    if (  requiresMAC && macComputed() ) {  // Uses MAC and it was computed
+	        // Calculate MAC from HMAC-SHA1(nonce, IV + plaintext) and
+	        // compare to stored value (separate_mac_). If same, then return true,
+	        // else return false.
+	        byte[] mac = computeMAC(authKey);
+	        assert mac.length == separate_mac_.length : "MACs are of differnt lengths. Should both be the same.";
+	        return CryptoHelper.arrayCompare(mac, separate_mac_); // Safe compare!!!
+	    } else if ( ! requiresMAC ) {           // Doesn't require a MAC
+	        return true;
+	    } else {
+	    		// This *used* to be the case (for versions 2.0 and 2.0.1) where we tried to
+	    		// accomodate the deprecated decrypt() method from ESAPI 1.4. Unfortunately,
+	    		// that was an EPIC FAIL. (See Google Issue # 306 for details.)
+	        logger.warning(Logger.SECURITY_FAILURE, "MAC may have been tampered with (e.g., length set to 0).");
+	        return false;    // Deprecated decrypt() method removed, so now return false.
+	    }
+	}
+================================================================================
+Method: if
+VULNERABLE VERSION:
+ else if ( ! usesMAC ) {           // Doesn't use MAC
+	        return true;
+	    }
+FIXED VERSION:
+ else if ( ! requiresMAC ) {           // Doesn't require a MAC
+	        return true;
+	    }
+================================================================================

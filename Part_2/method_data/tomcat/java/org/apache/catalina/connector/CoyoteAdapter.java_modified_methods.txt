@@ -1,0 +1,222 @@
+Method: normalize
+VULNERABLE VERSION:
+
+    public static boolean normalize(MessageBytes uriMB) {
+
+        ByteChunk uriBC = uriMB.getByteChunk();
+        byte[] b = uriBC.getBytes();
+        int start = uriBC.getStart();
+        int end = uriBC.getEnd();
+
+        // URL * is acceptable
+        if ((end - start == 1) && b[start] == (byte) '*')
+          return true;
+
+        int pos = 0;
+        int index = 0;
+
+        // Replace '\' with '/'
+        // Check for null byte
+        for (pos = start; pos < end; pos++) {
+            if (b[pos] == (byte) '\\')
+                b[pos] = (byte) '/';
+            if (b[pos] == (byte) 0)
+                return false;
+        }
+
+        // The URL must start with '/'
+        if (b[start] != (byte) '/') {
+            return false;
+        }
+
+        // Replace "//" with "/"
+        for (pos = start; pos < (end - 1); pos++) {
+            if (b[pos] == (byte) '/') {
+                while ((pos + 1 < end) && (b[pos + 1] == (byte) '/')) {
+                    copyBytes(b, pos, pos + 1, end - pos - 1);
+                    end--;
+                }
+            }
+        }
+
+        // If the URI ends with "/." or "/..", then we append an extra "/"
+        // Note: It is possible to extend the URI by 1 without any side effect
+        // as the next character is a non-significant WS.
+        if (((end - start) >= 2) && (b[end - 1] == (byte) '.')) {
+            if ((b[end - 2] == (byte) '/') 
+                || ((b[end - 2] == (byte) '.') 
+                    && (b[end - 3] == (byte) '/'))) {
+                b[end] = (byte) '/';
+                end++;
+            }
+        }
+
+        uriBC.setEnd(end);
+
+        index = 0;
+
+        // Resolve occurrences of "/./" in the normalized path
+        while (true) {
+            index = uriBC.indexOf("/./", 0, 3, index);
+            if (index < 0)
+                break;
+            copyBytes(b, start + index, start + index + 2, 
+                      end - start - index - 2);
+            end = end - 2;
+            uriBC.setEnd(end);
+        }
+
+        index = 0;
+
+        // Resolve occurrences of "/../" in the normalized path
+        while (true) {
+            index = uriBC.indexOf("/../", 0, 4, index);
+            if (index < 0)
+                break;
+            // Prevent from going outside our context
+            if (index == 0)
+                return false;
+            int index2 = -1;
+            for (pos = start + index - 1; (pos >= 0) && (index2 < 0); pos --) {
+                if (b[pos] == (byte) '/') {
+                    index2 = pos;
+                }
+            }
+            copyBytes(b, start + index2, start + index + 3,
+                      end - start - index - 3);
+            end = end + index2 - index - 3;
+            uriBC.setEnd(end);
+            index = index2;
+        }
+
+        uriBC.setBytes(b, start, end);
+
+        return true;
+
+    }
+FIXED VERSION:
+
+    public static boolean normalize(MessageBytes uriMB) {
+
+        ByteChunk uriBC = uriMB.getByteChunk();
+        byte[] b = uriBC.getBytes();
+        int start = uriBC.getStart();
+        int end = uriBC.getEnd();
+
+        // URL * is acceptable
+        if ((end - start == 1) && b[start] == (byte) '*')
+          return true;
+
+        int pos = 0;
+        int index = 0;
+
+        // Replace '\' with '/'
+        // Check for null byte
+        for (pos = start; pos < end; pos++) {
+            if (b[pos] == (byte) '\\') {
+                if (ALLOW_BACKSLASH) {
+                    b[pos] = (byte) '/';
+                } else {
+                    return false;
+                }
+            }
+            if (b[pos] == (byte) 0) {
+                return false;
+            }
+        }
+
+        // The URL must start with '/'
+        if (b[start] != (byte) '/') {
+            return false;
+        }
+
+        // Replace "//" with "/"
+        for (pos = start; pos < (end - 1); pos++) {
+            if (b[pos] == (byte) '/') {
+                while ((pos + 1 < end) && (b[pos + 1] == (byte) '/')) {
+                    copyBytes(b, pos, pos + 1, end - pos - 1);
+                    end--;
+                }
+            }
+        }
+
+        // If the URI ends with "/." or "/..", then we append an extra "/"
+        // Note: It is possible to extend the URI by 1 without any side effect
+        // as the next character is a non-significant WS.
+        if (((end - start) >= 2) && (b[end - 1] == (byte) '.')) {
+            if ((b[end - 2] == (byte) '/') 
+                || ((b[end - 2] == (byte) '.') 
+                    && (b[end - 3] == (byte) '/'))) {
+                b[end] = (byte) '/';
+                end++;
+            }
+        }
+
+        uriBC.setEnd(end);
+
+        index = 0;
+
+        // Resolve occurrences of "/./" in the normalized path
+        while (true) {
+            index = uriBC.indexOf("/./", 0, 3, index);
+            if (index < 0)
+                break;
+            copyBytes(b, start + index, start + index + 2, 
+                      end - start - index - 2);
+            end = end - 2;
+            uriBC.setEnd(end);
+        }
+
+        index = 0;
+
+        // Resolve occurrences of "/../" in the normalized path
+        while (true) {
+            index = uriBC.indexOf("/../", 0, 4, index);
+            if (index < 0)
+                break;
+            // Prevent from going outside our context
+            if (index == 0)
+                return false;
+            int index2 = -1;
+            for (pos = start + index - 1; (pos >= 0) && (index2 < 0); pos --) {
+                if (b[pos] == (byte) '/') {
+                    index2 = pos;
+                }
+            }
+            copyBytes(b, start + index2, start + index + 3,
+                      end - start - index - 3);
+            end = end + index2 - index - 3;
+            uriBC.setEnd(end);
+            index = index2;
+        }
+
+        uriBC.setBytes(b, start, end);
+
+        return true;
+
+    }
+================================================================================
+Method: for
+VULNERABLE VERSION:
+ byte
+        for (pos = start; pos < end; pos++) {
+            if (b[pos] == (byte) '\\')
+                b[pos] = (byte) '/';
+            if (b[pos] == (byte) 0)
+                return false;
+        }
+FIXED VERSION:
+ byte
+        for (pos = start; pos < end; pos++) {
+            if (b[pos] == (byte) '\\') {
+                if (ALLOW_BACKSLASH) {
+                    b[pos] = (byte) '/';
+                } else {
+                    return false;
+                }
+            }
+            if (b[pos] == (byte) 0) {
+                return false;
+            }
+        }
+================================================================================

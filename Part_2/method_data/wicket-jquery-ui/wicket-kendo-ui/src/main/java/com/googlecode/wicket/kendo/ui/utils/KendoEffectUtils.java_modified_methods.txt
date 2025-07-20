@@ -1,0 +1,20 @@
+Method: reload
+VULNERABLE VERSION:
+
+	public static void reload(AjaxRequestTarget target, Component component, KendoEffect effect, boolean reverse)
+	{
+		String selector = JQueryWidget.getSelector(component);
+
+		target.add(component);
+		target.appendJavaScript(String.format("kendo.fx(jQuery('%s')).%s.%s();", selector, effect, !reverse ? "play" : "reverse"));
+	}
+FIXED VERSION:
+
+	public static void reload(IPartialPageRequestHandler handler, Component component, KendoEffect effect, boolean reverse)
+	{
+		String selector = JQueryWidget.getSelector(component);
+
+		handler.add(component);
+		handler.appendJavaScript(String.format("kendo.fx(jQuery('%s')).%s.%s();", selector, effect, !reverse ? "play" : "reverse"));
+	}
+================================================================================

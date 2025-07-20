@@ -1,0 +1,14 @@
+Method: getMapper
+VULNERABLE VERSION:
+
+     public Mapper getMapper() {
+
+         return (mapper);
+
+     }
+FIXED VERSION:
+
+    public Mapper getMapper() {
+        return (mapper);
+    }
+================================================================================

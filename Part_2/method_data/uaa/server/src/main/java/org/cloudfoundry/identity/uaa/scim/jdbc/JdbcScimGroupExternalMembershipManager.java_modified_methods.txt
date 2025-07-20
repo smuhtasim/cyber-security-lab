@@ -1,0 +1,21 @@
+Method: PreparedStatementSetter
+VULNERABLE VERSION:
+ new PreparedStatementSetter() {
+            @Override
+            public void setValues(PreparedStatement ps) throws SQLException {
+                ps.setString(1, origin);
+                ps.setString(2, externalGroup);
+
+            }
+        }
+FIXED VERSION:
+ new PreparedStatementSetter() {
+            @Override
+            public void setValues(PreparedStatement ps) throws SQLException {
+                ps.setString(1, IdentityZoneHolder.get().getId());
+                ps.setString(2, origin);
+                ps.setString(3, externalGroup);
+
+            }
+        }
+================================================================================

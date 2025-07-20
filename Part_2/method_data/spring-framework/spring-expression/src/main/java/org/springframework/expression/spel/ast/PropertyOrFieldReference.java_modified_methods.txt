@@ -1,0 +1,66 @@
+Method: generateCode
+VULNERABLE VERSION:
+
+	public void generateCode(MethodVisitor mv, CodeFlow cf) {
+		PropertyAccessor accessorToUse = this.cachedReadAccessor;
+		if (!(accessorToUse instanceof CompilablePropertyAccessor)) {
+			throw new IllegalStateException("Property accessor is not compilable: " + accessorToUse);
+		}
+		((CompilablePropertyAccessor) accessorToUse).generateCode(this.name, mv, cf);
+		cf.pushDescriptor(this.exitTypeDescriptor);
+	}
+FIXED VERSION:
+
+	public void generateCode(MethodVisitor mv, CodeFlow cf) {
+		PropertyAccessor accessorToUse = this.cachedReadAccessor;
+		if (!(accessorToUse instanceof CompilablePropertyAccessor)) {
+			throw new IllegalStateException("Property accessor is not compilable: " + accessorToUse);
+		}
+		Label skipIfNull = null;
+		if (nullSafe) {
+			mv.visitInsn(DUP);
+			skipIfNull = new Label();
+			Label continueLabel = new Label();
+			mv.visitJumpInsn(IFNONNULL,continueLabel);
+			CodeFlow.insertCheckCast(mv, this.exitTypeDescriptor);
+			mv.visitJumpInsn(GOTO, skipIfNull);
+			mv.visitLabel(continueLabel);
+		}
+		((CompilablePropertyAccessor) accessorToUse).generateCode(this.name, mv, cf);
+		cf.pushDescriptor(this.exitTypeDescriptor);
+		if (originalPrimitiveExitTypeDescriptor != null) {
+			// The output of the accessor is a primitive but from the block above it might be null,
+			// so to have a common stack element type at skipIfNull target it is necessary
+			// to box the primitive
+			CodeFlow.insertBoxIfNecessary(mv, originalPrimitiveExitTypeDescriptor);
+		}
+		if (skipIfNull != null) {
+			mv.visitLabel(skipIfNull);
+		}
+	}
+================================================================================
+Method: getValue
+VULNERABLE VERSION:
+
+		public TypedValue getValue() {
+			TypedValue value =
+					this.ref.getValueInternal(this.contextObject, this.evalContext, this.autoGrowNullReferences);
+			PropertyAccessor accessorToUse = this.ref.cachedReadAccessor;
+			if (accessorToUse instanceof CompilablePropertyAccessor) {
+				this.ref.exitTypeDescriptor =
+						CodeFlow.toDescriptor(((CompilablePropertyAccessor) accessorToUse).getPropertyType());
+			}
+			return value;
+		}
+FIXED VERSION:
+
+		public TypedValue getValue() {
+			TypedValue value =
+					this.ref.getValueInternal(this.contextObject, this.evalContext, this.autoGrowNullReferences);
+			PropertyAccessor accessorToUse = this.ref.cachedReadAccessor;
+			if (accessorToUse instanceof CompilablePropertyAccessor) {
+				this.ref.setExitTypeDescriptor(CodeFlow.toDescriptor(((CompilablePropertyAccessor) accessorToUse).getPropertyType()));
+			}
+			return value;
+		}
+================================================================================

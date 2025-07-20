@@ -1,0 +1,72 @@
+Method: setAcceptParamNames
+VULNERABLE VERSION:
+
+
+    public void setAcceptParamNames(String commaDelim) {
+        Collection<String> acceptPatterns = ArrayUtils.asCollection(commaDelim);
+        if (acceptPatterns != null) {
+            acceptParams = new HashSet<Pattern>();
+            for (String pattern : acceptPatterns) {
+                acceptParams.add(Pattern.compile(pattern));
+            }
+        }
+    }
+FIXED VERSION:
+
+	public void setAcceptParamNames(String commaDelim) {
+        Collection<String> acceptPatterns = ArrayUtils.asCollection(commaDelim);
+        if (acceptPatterns != null) {
+            acceptParams = new HashSet<Pattern>();
+            for (String pattern : acceptPatterns) {
+                acceptParams.add(Pattern.compile(pattern));
+            }
+        }
+    }
+================================================================================
+Method: acceptableName
+VULNERABLE VERSION:
+
+
+    protected boolean acceptableName(String name) {
+        return isAccepted(name) && !isExcluded(name);
+    }
+FIXED VERSION:
+
+
+    protected boolean acceptableName(String name) {
+        return isWithinLengthLimit(name) && isAccepted(name)
+                && !isExcluded(name);
+    }
+================================================================================
+Method: isAccepted
+VULNERABLE VERSION:
+
+
+    protected boolean isAccepted(String paramName) {
+        if (!this.acceptParams.isEmpty()) {
+            for (Pattern pattern : acceptParams) {
+                Matcher matcher = pattern.matcher(paramName);
+                if (matcher.matches()) {
+                    return true;
+                }
+            }
+            return false;
+        } else
+            return acceptedPattern.matcher(paramName).matches();
+    }
+FIXED VERSION:
+
+
+	protected boolean isAccepted(String paramName) {
+        if (!this.acceptParams.isEmpty()) {
+            for (Pattern pattern : acceptParams) {
+                Matcher matcher = pattern.matcher(paramName);
+                if (matcher.matches()) {
+                    return true;
+                }
+            }
+            return false;
+        } else
+            return acceptedPattern.matcher(paramName).matches();
+    }
+================================================================================

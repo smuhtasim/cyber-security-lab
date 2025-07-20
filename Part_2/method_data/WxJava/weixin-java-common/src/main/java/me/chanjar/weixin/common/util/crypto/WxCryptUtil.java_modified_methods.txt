@@ -1,0 +1,22 @@
+Method: initialValue
+VULNERABLE VERSION:
+
+    protected DocumentBuilder initialValue() {
+      try {
+        return DocumentBuilderFactory.newInstance().newDocumentBuilder();
+      } catch (ParserConfigurationException exc) {
+        throw new IllegalArgumentException(exc);
+      }
+    }
+FIXED VERSION:
+
+    protected DocumentBuilder initialValue() {
+      try {
+        final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setExpandEntityReferences(false);
+        return factory.newDocumentBuilder();
+      } catch (ParserConfigurationException exc) {
+        throw new IllegalArgumentException(exc);
+      }
+    }
+================================================================================

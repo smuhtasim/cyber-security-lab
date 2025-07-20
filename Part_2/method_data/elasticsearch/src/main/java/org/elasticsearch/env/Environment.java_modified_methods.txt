@@ -1,0 +1,110 @@
+Method: Environment
+VULNERABLE VERSION:
+
+
+    public Environment(Settings settings) {
+        this.settings = settings;
+        if (settings.get("path.home") != null) {
+            homeFile = new File(cleanPath(settings.get("path.home")));
+        } else {
+            homeFile = new File(System.getProperty("user.dir"));
+        }
+
+        if (settings.get("path.conf") != null) {
+            configFile = new File(cleanPath(settings.get("path.conf")));
+        } else {
+            configFile = new File(homeFile, "config");
+        }
+
+        if (settings.get("path.plugins") != null) {
+            pluginsFile = new File(cleanPath(settings.get("path.plugins")));
+        } else {
+            pluginsFile = new File(homeFile, "plugins");
+        }
+
+        if (settings.get("path.work") != null) {
+            workFile = new File(cleanPath(settings.get("path.work")));
+        } else {
+            workFile = new File(homeFile, "work");
+        }
+        workWithClusterFile = new File(workFile, ClusterName.clusterNameFromSettings(settings).value());
+
+        String[] dataPaths = settings.getAsArray("path.data");
+        if (dataPaths.length > 0) {
+            dataFiles = new File[dataPaths.length];
+            dataWithClusterFiles = new File[dataPaths.length];
+            for (int i = 0; i < dataPaths.length; i++) {
+                dataFiles[i] = new File(dataPaths[i]);
+                dataWithClusterFiles[i] = new File(dataFiles[i], ClusterName.clusterNameFromSettings(settings).value());
+            }
+        } else {
+            dataFiles = new File[]{new File(homeFile, "data")};
+            dataWithClusterFiles = new File[]{new File(new File(homeFile, "data"), ClusterName.clusterNameFromSettings(settings).value())};
+        }
+
+        if (settings.get("path.logs") != null) {
+            logsFile = new File(cleanPath(settings.get("path.logs")));
+        } else {
+            logsFile = new File(homeFile, "logs");
+        }
+    }
+FIXED VERSION:
+
+
+    public Environment(Settings settings) {
+        this.settings = settings;
+        if (settings.get("path.home") != null) {
+            homeFile = new File(cleanPath(settings.get("path.home")));
+        } else {
+            homeFile = new File(System.getProperty("user.dir"));
+        }
+
+        if (settings.get("path.conf") != null) {
+            configFile = new File(cleanPath(settings.get("path.conf")));
+        } else {
+            configFile = new File(homeFile, "config");
+        }
+
+        if (settings.get("path.plugins") != null) {
+            pluginsFile = new File(cleanPath(settings.get("path.plugins")));
+        } else {
+            pluginsFile = new File(homeFile, "plugins");
+        }
+
+        if (settings.get("path.work") != null) {
+            workFile = new File(cleanPath(settings.get("path.work")));
+        } else {
+            workFile = new File(homeFile, "work");
+        }
+        workWithClusterFile = new File(workFile, ClusterName.clusterNameFromSettings(settings).value());
+
+        String[] dataPaths = settings.getAsArray("path.data");
+        if (dataPaths.length > 0) {
+            dataFiles = new File[dataPaths.length];
+            dataWithClusterFiles = new File[dataPaths.length];
+            for (int i = 0; i < dataPaths.length; i++) {
+                dataFiles[i] = new File(dataPaths[i]);
+                dataWithClusterFiles[i] = new File(dataFiles[i], ClusterName.clusterNameFromSettings(settings).value());
+            }
+        } else {
+            dataFiles = new File[]{new File(homeFile, "data")};
+            dataWithClusterFiles = new File[]{new File(new File(homeFile, "data"), ClusterName.clusterNameFromSettings(settings).value())};
+        }
+
+        String[] repoPaths = settings.getAsArray("path.repo");
+        if (repoPaths.length > 0) {
+            repoFiles = new File[repoPaths.length];
+            for (int i = 0; i < repoPaths.length; i++) {
+                repoFiles[i] = new File(repoPaths[i]);
+            }
+        } else {
+            repoFiles = new File[0];
+        }
+
+        if (settings.get("path.logs") != null) {
+            logsFile = new File(cleanPath(settings.get("path.logs")));
+        } else {
+            logsFile = new File(homeFile, "logs");
+        }
+    }
+================================================================================

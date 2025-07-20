@@ -1,0 +1,134 @@
+Method: SolrZkToCuratorCredentialsACLs
+VULNERABLE VERSION:
+
+
+    public SolrZkToCuratorCredentialsACLs(SolrZkClient zkClient) {
+      this.aclProvider = createACLProvider(zkClient);
+      this.authInfos = createAuthInfo(zkClient);
+    }
+FIXED VERSION:
+
+
+    public SolrZkToCuratorCredentialsACLs(SolrZkClient zkClient) {
+      this.aclProvider = createACLProvider(zkClient);
+      this.authInfos = createAuthInfo(zkClient);
+      String zkHost = zkClient.getZkServerAddress();
+      this.zkChroot = zkHost.contains("/")? zkHost.substring(zkHost.indexOf("/")): null;
+    }
+================================================================================
+Method: createACLProvider
+VULNERABLE VERSION:
+
+
+    private ACLProvider createACLProvider(SolrZkClient zkClient) {
+      final ZkACLProvider zkACLProvider = zkClient.getZkACLProvider();
+      return new ACLProvider() {
+        @Override
+        public List<ACL> getDefaultAcl() {
+          return zkACLProvider.getACLsToAdd(null);
+        }
+
+        @Override
+        public List<ACL> getAclForPath(String path) {
+           List<ACL> acls = zkACLProvider.getACLsToAdd(path);
+           return acls;
+        }
+      };
+    }
+FIXED VERSION:
+
+
+    private ACLProvider createACLProvider(SolrZkClient zkClient) {
+      final ZkACLProvider zkACLProvider = zkClient.getZkACLProvider();
+      return new ACLProvider() {
+        @Override
+        public List<ACL> getDefaultAcl() {
+          return zkACLProvider.getACLsToAdd(null);
+        }
+
+        @Override
+        public List<ACL> getAclForPath(String path) {
+          List<ACL> acls = null;
+
+          // The logic in SecurityAwareZkACLProvider does not work when
+          // the Solr zkPath is chrooted (e.g. /solr instead of /). This
+          // due to the fact that the getACLsToAdd(..) callback provides
+          // an absolute path (instead of relative path to the chroot) and
+          // the string comparison in SecurityAwareZkACLProvider fails.
+          if (zkACLProvider instanceof SecurityAwareZkACLProvider && zkChroot != null) {
+            acls = zkACLProvider.getACLsToAdd(path.replace(zkChroot, ""));
+          } else {
+            acls = zkACLProvider.getACLsToAdd(path);
+          }
+
+          return acls;
+        }
+      };
+    }
+================================================================================
+Method: ACLProvider
+VULNERABLE VERSION:
+ new ACLProvider() {
+        @Override
+        public List<ACL> getDefaultAcl() {
+          return zkACLProvider.getACLsToAdd(null);
+        }
+
+        @Override
+        public List<ACL> getAclForPath(String path) {
+           List<ACL> acls = zkACLProvider.getACLsToAdd(path);
+           return acls;
+        }
+      }
+FIXED VERSION:
+ new ACLProvider() {
+        @Override
+        public List<ACL> getDefaultAcl() {
+          return zkACLProvider.getACLsToAdd(null);
+        }
+
+        @Override
+        public List<ACL> getAclForPath(String path) {
+          List<ACL> acls = null;
+
+          // The logic in SecurityAwareZkACLProvider does not work when
+          // the Solr zkPath is chrooted (e.g. /solr instead of /). This
+          // due to the fact that the getACLsToAdd(..) callback provides
+          // an absolute path (instead of relative path to the chroot) and
+          // the string comparison in SecurityAwareZkACLProvider fails.
+          if (zkACLProvider instanceof SecurityAwareZkACLProvider && zkChroot != null) {
+            acls = zkACLProvider.getACLsToAdd(path.replace(zkChroot, ""));
+          } else {
+            acls = zkACLProvider.getACLsToAdd(path);
+          }
+
+          return acls;
+        }
+      }
+================================================================================
+Method: getAclForPath
+VULNERABLE VERSION:
+
+        public List<ACL> getAclForPath(String path) {
+           List<ACL> acls = zkACLProvider.getACLsToAdd(path);
+           return acls;
+        }
+FIXED VERSION:
+
+        public List<ACL> getAclForPath(String path) {
+          List<ACL> acls = null;
+
+          // The logic in SecurityAwareZkACLProvider does not work when
+          // the Solr zkPath is chrooted (e.g. /solr instead of /). This
+          // due to the fact that the getACLsToAdd(..) callback provides
+          // an absolute path (instead of relative path to the chroot) and
+          // the string comparison in SecurityAwareZkACLProvider fails.
+          if (zkACLProvider instanceof SecurityAwareZkACLProvider && zkChroot != null) {
+            acls = zkACLProvider.getACLsToAdd(path.replace(zkChroot, ""));
+          } else {
+            acls = zkACLProvider.getACLsToAdd(path);
+          }
+
+          return acls;
+        }
+================================================================================

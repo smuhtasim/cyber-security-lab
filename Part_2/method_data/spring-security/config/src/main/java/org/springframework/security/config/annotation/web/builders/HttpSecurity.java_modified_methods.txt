@@ -1,0 +1,42 @@
+Method: HttpSecurity
+VULNERABLE VERSION:
+
+	public HttpSecurity(ObjectPostProcessor<Object> objectPostProcessor,
+			AuthenticationManagerBuilder authenticationBuilder,
+			Map<Class<Object>, Object> sharedObjects) {
+		super(objectPostProcessor);
+		Assert.notNull(authenticationBuilder, "authenticationBuilder cannot be null");
+		setSharedObject(AuthenticationManagerBuilder.class, authenticationBuilder);
+		for (Map.Entry<Class<Object>, Object> entry : sharedObjects.entrySet()) {
+			setSharedObject(entry.getKey(), entry.getValue());
+		}
+	}
+FIXED VERSION:
+
+	public HttpSecurity(ObjectPostProcessor<Object> objectPostProcessor,
+			AuthenticationManagerBuilder authenticationBuilder,
+			Map<Class<? extends Object>, Object> sharedObjects) {
+		super(objectPostProcessor);
+		Assert.notNull(authenticationBuilder, "authenticationBuilder cannot be null");
+		setSharedObject(AuthenticationManagerBuilder.class, authenticationBuilder);
+		for (Map.Entry<Class<? extends Object>, Object> entry : sharedObjects
+				.entrySet()) {
+			setSharedObject((Class<Object>) entry.getKey(), entry.getValue());
+		}
+		ApplicationContext context = (ApplicationContext) sharedObjects
+				.get(ApplicationContext.class);
+		this.requestMatcherConfigurer = new RequestMatcherConfigurer(context);
+	}
+================================================================================
+Method: RequestMatcherConfigurer
+VULNERABLE VERSION:
+
+
+		private RequestMatcherConfigurer() {
+		}
+FIXED VERSION:
+
+		private RequestMatcherConfigurer(ApplicationContext context) {
+			setApplicationContext(context);
+		}
+================================================================================

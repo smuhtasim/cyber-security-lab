@@ -1,0 +1,29 @@
+Method: ConstrainedField
+VULNERABLE VERSION:
+
+	public ConstrainedField(ConfigurationSource source,
+							ConstraintLocation location,
+							Set<MetaConstraint<?>> constraints,
+							Map<Class<?>, Class<?>> groupConversions,
+							boolean isCascading,
+							boolean requiresUnwrapping) {
+
+		super( source, ConstrainedElementKind.FIELD, location, constraints, groupConversions, isCascading, requiresUnwrapping );
+
+		Member member = location.getMember();
+		if ( member != null && isConstrained() ) {
+			run( SetAccessibility.action( member ) );
+		}
+	}
+FIXED VERSION:
+
+	public ConstrainedField(ConfigurationSource source,
+							ConstraintLocation location,
+							Set<MetaConstraint<?>> constraints,
+							Map<Class<?>, Class<?>> groupConversions,
+							boolean isCascading,
+							boolean requiresUnwrapping) {
+
+		super( source, ConstrainedElementKind.FIELD, location, constraints, groupConversions, isCascading, requiresUnwrapping );
+	}
+================================================================================

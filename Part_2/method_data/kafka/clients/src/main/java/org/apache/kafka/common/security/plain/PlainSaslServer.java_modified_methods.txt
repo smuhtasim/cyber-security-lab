@@ -1,0 +1,16 @@
+Method: getAuthorizationID
+VULNERABLE VERSION:
+
+    public String getAuthorizationID() {
+        if (!complete)
+            throw new IllegalStateException("Authentication exchange has not completed");
+        return authorizationID;
+    }
+FIXED VERSION:
+
+    public String getAuthorizationID() {
+        if (!complete)
+            throw new IllegalStateException("Authentication exchange has not completed");
+        return authorizationId;
+    }
+================================================================================

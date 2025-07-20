@@ -1,0 +1,18 @@
+Method: getLockoutPolicy
+VULNERABLE VERSION:
+
+    public LockoutPolicy getLockoutPolicy() {
+        LockoutPolicy res = IdentityZoneHolder.get().getConfig().getClientLockoutPolicy();
+        return res.getLockoutAfterFailures() != -1 ? res : defaultLockoutPolicy;
+    }
+FIXED VERSION:
+
+    public LockoutPolicy getLockoutPolicy() {
+        if(isEnabled) {
+            LockoutPolicy res = IdentityZoneHolder.get().getConfig().getClientLockoutPolicy();
+            return res.getLockoutAfterFailures() != -1 ? res : defaultLockoutPolicy;
+        } else {
+            return disabledLockoutPolicy;
+        }
+    }
+================================================================================

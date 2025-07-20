@@ -1,0 +1,12 @@
+Method: setValidateClientProvidedNewSessionId
+VULNERABLE VERSION:
+
+    public void setValidateClientProvidedNewSessionId(boolean validateClientProvidedNewSessionId) {
+        //NO-OP
+    }
+FIXED VERSION:
+
+    public void setValidateClientProvidedNewSessionId(boolean validateClientProvidedNewSessionId) {
+        // NO-OP
+    }
+================================================================================

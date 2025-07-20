@@ -1,0 +1,14 @@
+Method: valid
+VULNERABLE VERSION:
+
+
+    public boolean valid(String host) {
+        return InternetDomainName.isValid(host) || ip(host) || subnet(host);
+    }
+FIXED VERSION:
+
+
+    public boolean valid(String host) {
+        return InternetDomainName.isValid(host) || isIp(host) || isSubnet(host) || isFile(host);
+    }
+================================================================================

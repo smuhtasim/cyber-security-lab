@@ -1,0 +1,20 @@
+Method: cloneWithCredential
+VULNERABLE VERSION:
+
+
+    public CIMInstance cloneWithCredential(String credentialId) {
+        CIMInstance instance = new CIMInstance(name, host, port, credentialId);
+        instance.setUser(user);
+        instance.setPassword(password);
+        instance.setUseSSL(useSSL);
+        return instance;
+    }
+FIXED VERSION:
+
+
+    public CIMInstance cloneWithCredential(String credentialId) {
+        CIMInstance instance = new CIMInstance(name, host, port, credentialId);
+        instance.setUseSSL(useSSL);
+        return instance;
+    }
+================================================================================

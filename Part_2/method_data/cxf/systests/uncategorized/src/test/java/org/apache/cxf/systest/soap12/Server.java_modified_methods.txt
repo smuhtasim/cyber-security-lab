@@ -1,0 +1,51 @@
+Method: run
+VULNERABLE VERSION:
+
+
+
+    protected void run()  {    
+        Object implementor = new GreeterImpl();
+        String address = "http://localhost:" + PORT + "/SoapContext/SoapPort";
+        Endpoint.publish(address, implementor);
+    }
+FIXED VERSION:
+
+    protected void run()  {    
+        Object implementor = new GreeterImpl();
+        String address = "http://localhost:" + PORT + "/SoapContext/SoapPort";
+        ep = Endpoint.publish(address, implementor);
+        EndpointImpl epi = (EndpointImpl)ep;
+        epi.getService().getInInterceptors().add(new URIMappingInterceptor());
+    }
+================================================================================
+Method: main
+VULNERABLE VERSION:
+
+
+
+    public static void main(String[] args) {
+        try {
+            Server s = new Server();
+            s.start();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            System.exit(-1);
+        } finally {
+            System.out.println("done!");
+        }
+    }
+FIXED VERSION:
+
+
+    public static void main(String[] args) {
+        try {
+            Server s = new Server();
+            s.start();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            System.exit(-1);
+        } finally {
+            System.out.println("done!");
+        }
+    }
+================================================================================

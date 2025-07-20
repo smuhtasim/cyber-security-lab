@@ -1,0 +1,13 @@
+Method: getLogText
+VULNERABLE VERSION:
+
+    public AnnotatedLargeText<Computer> getLogText() {
+        return new AnnotatedLargeText<Computer>(getLogFile(), Charset.defaultCharset(), false, this);
+    }
+FIXED VERSION:
+
+    public AnnotatedLargeText<Computer> getLogText() {
+        checkPermission(CONNECT);
+        return new AnnotatedLargeText<Computer>(getLogFile(), Charset.defaultCharset(), false, this);
+    }
+================================================================================

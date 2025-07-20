@@ -1,0 +1,40 @@
+Method: CommandLauncher
+VULNERABLE VERSION:
+
+
+    public CommandLauncher(String command, EnvVars env) {
+    	this.agentCommand = command;
+    	this.env = env;
+    }
+FIXED VERSION:
+
+
+    public CommandLauncher(String command, EnvVars env) {
+    	this.agentCommand = command;
+    	this.env = env;
+        Jenkins.getInstance().checkPermission(Jenkins.RUN_SCRIPTS);
+    }
+================================================================================
+Method: doCheckCommand
+VULNERABLE VERSION:
+
+
+        public FormValidation doCheckCommand(@QueryParameter String value) {
+            if(Util.fixEmptyAndTrim(value)==null)
+                return FormValidation.error(Messages.CommandLauncher_NoLaunchCommand());
+            else
+                return FormValidation.ok();
+        }
+FIXED VERSION:
+
+
+        public FormValidation doCheckCommand(@QueryParameter String value) {
+            if (!Jenkins.getInstance().hasPermission(Jenkins.RUN_SCRIPTS)) {
+                return FormValidation.warning(Messages.CommandLauncher_cannot_be_configured_by_non_administrato());
+            }
+            if(Util.fixEmptyAndTrim(value)==null)
+                return FormValidation.error(Messages.CommandLauncher_NoLaunchCommand());
+            else
+                return FormValidation.ok();
+        }
+================================================================================

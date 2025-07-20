@@ -1,0 +1,136 @@
+Method: doJvmDecoder
+VULNERABLE VERSION:
+
+
+
+    private void doJvmDecoder(byte[] src, boolean errorExpected,
+            int failPosExpected) {
+        CharsetDecoder decoder = B2CConverter.UTF_8.newDecoder()
+                .onMalformedInput(CodingErrorAction.REPORT)
+                .onUnmappableCharacter(CodingErrorAction.REPORT);
+
+
+        ByteBuffer bb = ByteBuffer.allocate(src.length);
+        CharBuffer cb = CharBuffer.allocate(bb.limit());
+
+        boolean error = false;
+        int i = 0;
+        for (; i < src.length; i++) {
+            bb.put(src[i]);
+            bb.flip();
+            CoderResult cr = decoder.decode(bb, cb, false);
+            if (cr.isError()) {
+                error = true;
+                break;
+            }
+            bb.compact();
+        }
+
+        assertEquals(Boolean.valueOf(errorExpected), Boolean.valueOf(error));
+        assertEquals(failPosExpected, i);
+    }
+FIXED VERSION:
+
+
+
+    private void doJvmDecoder(byte[] src, boolean errorExpected,
+            int failPosExpected) {
+        CharsetDecoder decoder = B2CConverter.UTF_8.newDecoder()
+                .onMalformedInput(CodingErrorAction.REPORT)
+                .onUnmappableCharacter(CodingErrorAction.REPORT);
+
+
+        ByteBuffer bb = ByteBuffer.allocate(src.length);
+        CharBuffer cb = CharBuffer.allocate(bb.limit());
+
+        boolean error = false;
+        int i = 0;
+        for (; i < src.length; i++) {
+            bb.put(src[i]);
+            bb.flip();
+            CoderResult cr = decoder.decode(bb, cb, false);
+            if (cr.isError()) {
+                error = true;
+                break;
+            }
+            bb.compact();
+        }
+
+        StringBuilder ashex = new StringBuilder(src.length * 4);
+        for (int j = 0; j < src.length; j++) {
+            if (i > 0) ashex.append(' ');
+            ashex.append(Integer.toBinaryString(src[j] & 0xff));
+        }
+
+        assertEquals(ashex.toString(),
+                Boolean.valueOf(errorExpected), Boolean.valueOf(error));
+        if (failPosExpected != -1) {
+            assertEquals(failPosExpected, i);
+        }
+    }
+================================================================================
+Method: doHarmonyDecoder
+VULNERABLE VERSION:
+
+
+
+    public void doHarmonyDecoder(byte[] src, boolean errorExpected,
+            int failPosExpected) {
+        CharsetDecoder decoder = new Utf8Decoder();
+
+        ByteBuffer bb = ByteBuffer.allocate(src.length);
+        CharBuffer cb = CharBuffer.allocate(bb.limit());
+
+        boolean error = false;
+        int i = 0;
+        for (; i < src.length; i++) {
+            bb.put(src[i]);
+            bb.flip();
+            CoderResult cr = decoder.decode(bb, cb, false);
+            if (cr.isError()) {
+                error = true;
+                break;
+            }
+            bb.compact();
+        }
+
+        assertEquals(Boolean.valueOf(errorExpected), Boolean.valueOf(error));
+        assertEquals(failPosExpected, i);
+    }
+FIXED VERSION:
+
+
+
+    private void doHarmonyDecoder(byte[] src, boolean errorExpected,
+            int failPosExpected) {
+        CharsetDecoder decoder = new Utf8Decoder();
+
+        ByteBuffer bb = ByteBuffer.allocate(src.length);
+        CharBuffer cb = CharBuffer.allocate(bb.limit());
+
+        boolean error = false;
+        int i = 0;
+        for (; i < src.length; i++) {
+            bb.put(src[i]);
+            bb.flip();
+            CoderResult cr = decoder.decode(bb, cb, false);
+            if (cr.isError()) {
+                error = true;
+                break;
+            }
+            bb.compact();
+        }
+
+        StringBuilder ashex = new StringBuilder(src.length * 4);
+        for (int j = 0; j < src.length; j++) {
+            if (i > 0) ashex.append(' ');
+            ashex.append(Integer.toBinaryString(src[j] & 0xff));
+        }
+
+        assertEquals(ashex.toString(),
+                Boolean.valueOf(errorExpected), Boolean.valueOf(error));
+        if (failPosExpected != -1) {
+            assertEquals(failPosExpected, i);
+        }
+    }
+================================================================================

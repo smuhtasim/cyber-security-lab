@@ -1,0 +1,54 @@
+Method: getServers
+VULNERABLE VERSION:
+
+    public List<GerritServer> getServers() {
+        PluginImpl plugin = PluginImpl.getInstance();
+        if (plugin == null) {
+            return Collections.emptyList();
+        }
+        return plugin.getServers();
+    }
+FIXED VERSION:
+
+    public List<GerritServer> getServers() {
+        checkPermission();
+        PluginImpl plugin = PluginImpl.getInstance();
+        if (plugin == null) {
+            return Collections.emptyList();
+        }
+        return plugin.getServers();
+    }
+================================================================================
+Method: getServer
+VULNERABLE VERSION:
+
+    public GerritServer getServer(String encodedServerName) {
+        String serverName;
+        try {
+            serverName = URLDecoder.decode(encodedServerName, CharEncoding.UTF_8);
+        } catch (Exception ex) {
+            serverName = URLDecoder.decode(encodedServerName);
+        }
+        PluginImpl plugin = PluginImpl.getInstance();
+        if (plugin == null) {
+            return null;
+        }
+        return plugin.getServer(serverName);
+    }
+FIXED VERSION:
+
+    public GerritServer getServer(String encodedServerName) {
+        checkPermission();
+        String serverName;
+        try {
+            serverName = URLDecoder.decode(encodedServerName, CharEncoding.UTF_8);
+        } catch (Exception ex) {
+            serverName = URLDecoder.decode(encodedServerName);
+        }
+        PluginImpl plugin = PluginImpl.getInstance();
+        if (plugin == null) {
+            return null;
+        }
+        return plugin.getServer(serverName);
+    }
+================================================================================

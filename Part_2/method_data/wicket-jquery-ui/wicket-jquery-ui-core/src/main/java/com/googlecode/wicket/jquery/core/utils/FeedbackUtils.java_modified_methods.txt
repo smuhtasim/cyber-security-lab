@@ -1,0 +1,98 @@
+Method: reload
+VULNERABLE VERSION:
+
+	public static void reload(Component component, AjaxRequestTarget target)
+	{
+		BroadcastUtils.breadth(component.getPage(), new FeedbackPayload(target));
+	}
+FIXED VERSION:
+
+	public static void reload(IPartialPageRequestHandler handler)
+	{
+		BroadcastUtils.breadth(handler, new FeedbackPayload(handler));
+	}
+================================================================================
+Method: debug
+VULNERABLE VERSION:
+
+	public static void debug(Component component, AjaxRequestTarget target, String message)
+	{
+		BroadcastUtils.breadth(component.getPage(), new FeedbackPayload(target, FeedbackMessage.DEBUG, message));
+	}
+FIXED VERSION:
+
+	public static void debug(IPartialPageRequestHandler handler, String message)
+	{
+		BroadcastUtils.breadth(handler, new FeedbackPayload(handler, FeedbackMessage.DEBUG, message));
+	}
+================================================================================
+Method: info
+VULNERABLE VERSION:
+
+	public static void info(Component component, AjaxRequestTarget target, String message)
+	{
+		BroadcastUtils.breadth(component.getPage(), new FeedbackPayload(target, FeedbackMessage.INFO, message));
+	}
+FIXED VERSION:
+
+	public static void info(IPartialPageRequestHandler handler, String message)
+	{
+		BroadcastUtils.breadth(handler, new FeedbackPayload(handler, FeedbackMessage.INFO, message));
+	}
+================================================================================
+Method: success
+VULNERABLE VERSION:
+
+	public static void success(Component component, AjaxRequestTarget target, String message)
+	{
+		BroadcastUtils.breadth(component.getPage(), new FeedbackPayload(target, FeedbackMessage.SUCCESS, message));
+	}
+FIXED VERSION:
+
+	public static void success(IPartialPageRequestHandler handler, String message)
+	{
+		BroadcastUtils.breadth(handler, new FeedbackPayload(handler, FeedbackMessage.SUCCESS, message));
+	}
+================================================================================
+Method: warn
+VULNERABLE VERSION:
+
+	public static void warn(Component component, AjaxRequestTarget target, String message)
+	{
+		BroadcastUtils.breadth(component.getPage(), new FeedbackPayload(target, FeedbackMessage.WARNING, message));
+	}
+FIXED VERSION:
+
+	public static void warn(IPartialPageRequestHandler handler, String message)
+	{
+		BroadcastUtils.breadth(handler, new FeedbackPayload(handler, FeedbackMessage.WARNING, message));
+	}
+================================================================================
+Method: error
+VULNERABLE VERSION:
+
+	public static void error(Component component, AjaxRequestTarget target, String message)
+	{
+		BroadcastUtils.breadth(component.getPage(), new FeedbackPayload(target, FeedbackMessage.ERROR, message));
+	}
+FIXED VERSION:
+
+	public static void error(IPartialPageRequestHandler handler, String message)
+	{
+		BroadcastUtils.breadth(handler, new FeedbackPayload(handler, FeedbackMessage.ERROR, message));
+	}
+================================================================================
+Method: fatal
+VULNERABLE VERSION:
+
+	public static void fatal(Component component, AjaxRequestTarget target, String message)
+	{
+		BroadcastUtils.breadth(component.getPage(), new FeedbackPayload(target, FeedbackMessage.FATAL, message));
+	}
+FIXED VERSION:
+
+	public static void fatal(IPartialPageRequestHandler handler, String message)
+	{
+		BroadcastUtils.breadth(handler, new FeedbackPayload(handler, FeedbackMessage.FATAL, message));
+	}
+================================================================================

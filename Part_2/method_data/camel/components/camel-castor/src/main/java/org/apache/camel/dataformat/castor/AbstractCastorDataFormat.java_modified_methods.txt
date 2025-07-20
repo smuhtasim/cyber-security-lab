@@ -1,0 +1,15 @@
+Method: isContentTypeHeader
+VULNERABLE VERSION:
+
+
+
+    public boolean isContentTypeHeader() {
+        return contentTypeHeader;
+    }
+FIXED VERSION:
+
+
+    public boolean isContentTypeHeader() {
+        return contentTypeHeader;
+    }
+================================================================================

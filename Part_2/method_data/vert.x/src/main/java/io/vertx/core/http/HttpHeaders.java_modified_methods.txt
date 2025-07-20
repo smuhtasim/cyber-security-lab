@@ -1,0 +1,13 @@
+Method: createOptimized
+VULNERABLE VERSION:
+
+  public static CharSequence createOptimized(String value) {
+    return io.netty.handler.codec.http.HttpHeaders.newEntity(value);
+  }
+FIXED VERSION:
+
+  public static CharSequence createOptimized(String value) {
+    HttpUtils.validateHeader(value);
+    return new AsciiString(value);
+  }
+================================================================================

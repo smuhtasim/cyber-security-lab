@@ -1,0 +1,31 @@
+Method: cleanupActionName
+VULNERABLE VERSION:
+
+    protected String cleanupActionName(final String rawActionName) {
+        if (allowedActionNames.matcher(rawActionName).matches()) {
+            return rawActionName;
+        } else {
+            if (LOG.isWarnEnabled()) {
+                LOG.warn("Action/method [#0] does not match allowed action names pattern [#1], cleaning it up!",
+                        rawActionName, allowedActionNames);
+            }
+            String cleanActionName = rawActionName;
+            for (String chunk : allowedActionNames.split(rawActionName)) {
+                cleanActionName = cleanActionName.replace(chunk, "");
+            }
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Cleaned action/method name [#0]", cleanActionName);
+            }
+            return cleanActionName;
+        }
+    }
+FIXED VERSION:
+
+    protected String cleanupActionName(final String rawActionName) {
+        if (allowedActionNames.matcher(rawActionName).matches()) {
+            return rawActionName;
+        } else {
+            throw new StrutsException("Action [" + rawActionName + "] does not match allowed action names pattern [" + allowedActionNames + "]!");
+        }
+    }
+================================================================================

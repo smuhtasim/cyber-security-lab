@@ -1,0 +1,30 @@
+Method: SnakeYAMLDataFormat
+VULNERABLE VERSION:
+
+
+    public SnakeYAMLDataFormat(Class<?> type) {
+        this.yamlCache = new ThreadLocal<>();
+        this.useApplicationContextClassLoader = true;
+        this.prettyFlow = false;
+        this.allowAnyType = false;
+
+        if (type != null) {
+            setUnmarshalType(type);
+        }
+    }
+FIXED VERSION:
+
+
+    public SnakeYAMLDataFormat(Class<?> type) {
+        this.yamlCache = new ThreadLocal<>();
+        this.useApplicationContextClassLoader = true;
+        this.prettyFlow = false;
+        this.allowAnyType = false;
+
+        if (type != null) {
+            this.unmarshalType = type;
+            this.typeFilters = new CopyOnWriteArrayList<>();
+            this.typeFilters.add(TypeFilters.types(type));
+        }
+    }
+================================================================================

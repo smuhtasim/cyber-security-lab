@@ -1,0 +1,23 @@
+Method: isUaaManagedUser
+VULNERABLE VERSION:
+
+
+    private boolean isUaaManagedUser(Authentication authentication) {
+        if (authentication.getPrincipal() instanceof UaaPrincipal) {
+            UaaPrincipal principal = (UaaPrincipal) authentication.getPrincipal();
+            return OriginKeys.UAA.equals(principal.getOrigin());
+        }
+        return false;
+    }
+FIXED VERSION:
+
+
+
+    private boolean isUaaManagedUser(Authentication authentication) {
+        if (authentication.getPrincipal() instanceof UaaPrincipal) {
+            UaaPrincipal principal = (UaaPrincipal) authentication.getPrincipal();
+            return OriginKeys.UAA.equals(principal.getOrigin());
+        }
+        return false;
+    }
+================================================================================

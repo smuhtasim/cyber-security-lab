@@ -1,0 +1,53 @@
+Method: JwtIssuerValidator
+VULNERABLE VERSION:
+
+	public JwtIssuerValidator(String issuer) {
+		Assert.notNull(issuer, "issuer cannot be null");
+
+		try {
+			this.issuer = new URL(issuer);
+		} catch (MalformedURLException ex) {
+			throw new IllegalArgumentException(
+					"Invalid Issuer URL " + issuer + " : " + ex.getMessage(),
+					ex);
+		}
+	}
+FIXED VERSION:
+
+	public JwtIssuerValidator(String issuer) {
+		Assert.notNull(issuer, "issuer cannot be null");
+
+		try {
+			this.issuer = new URL(issuer).toString();
+		} catch (MalformedURLException ex) {
+			throw new IllegalArgumentException(
+					"Invalid Issuer URL " + issuer + " : " + ex.getMessage(),
+					ex);
+		}
+	}
+================================================================================
+Method: validate
+VULNERABLE VERSION:
+
+	public OAuth2TokenValidatorResult validate(Jwt token) {
+		Assert.notNull(token, "token cannot be null");
+
+		if (this.issuer.equals(token.getIssuer())) {
+			return OAuth2TokenValidatorResult.success();
+		} else {
+			return OAuth2TokenValidatorResult.failure(INVALID_ISSUER);
+		}
+	}
+FIXED VERSION:
+
+	public OAuth2TokenValidatorResult validate(Jwt token) {
+		Assert.notNull(token, "token cannot be null");
+
+		String tokenIssuer = token.getClaimAsString(JwtClaimNames.ISS);
+		if (this.issuer.equals(tokenIssuer)) {
+			return OAuth2TokenValidatorResult.success();
+		} else {
+			return OAuth2TokenValidatorResult.failure(INVALID_ISSUER);
+		}
+	}
+================================================================================

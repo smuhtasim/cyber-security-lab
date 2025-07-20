@@ -1,0 +1,62 @@
+Method: PyBytecode
+VULNERABLE VERSION:
+
+    public PyBytecode(int argcount, int nlocals, int stacksize, int flags,
+            String codestring, PyObject[] constants, String[] names, String varnames[],
+            String filename, String name, int firstlineno, String lnotab,
+            String[] cellvars, String[] freevars) {
+
+        debug = defaultDebug;
+
+        co_argcount = nargs = argcount;
+        co_varnames = varnames;
+        co_nlocals = nlocals; // maybe assert = varnames.length;
+        co_filename = filename;
+        co_firstlineno = firstlineno;
+        co_cellvars = cellvars;
+        co_freevars = freevars;
+        co_name = name;
+        co_flags = new CompilerFlags(flags);
+        varargs = co_flags.isFlagSet(CodeFlag.CO_VARARGS);
+        varkwargs = co_flags.isFlagSet(CodeFlag.CO_VARKEYWORDS);
+
+        co_stacksize = stacksize;
+        co_consts = constants;
+        co_names = names;
+        co_code = getBytes(codestring);
+        co_lnotab = getBytes(lnotab);
+    }
+FIXED VERSION:
+
+    public PyBytecode(int argcount, int nlocals, int stacksize, int flags,
+            String codestring, PyObject[] constants, String[] names, String varnames[],
+            String filename, String name, int firstlineno, String lnotab,
+            String[] cellvars, String[] freevars) {
+
+        debug = defaultDebug;
+
+        if (argcount < 0) {
+            throw Py.ValueError("code: argcount must not be negative");
+        } else if (nlocals < 0) {
+            throw Py.ValueError("code: nlocals must not be negative");
+        }
+
+        co_argcount = nargs = argcount;
+        co_varnames = varnames;
+        co_nlocals = nlocals; // maybe assert = varnames.length;
+        co_filename = filename;
+        co_firstlineno = firstlineno;
+        co_cellvars = cellvars;
+        co_freevars = freevars;
+        co_name = name;
+        co_flags = new CompilerFlags(flags);
+        varargs = co_flags.isFlagSet(CodeFlag.CO_VARARGS);
+        varkwargs = co_flags.isFlagSet(CodeFlag.CO_VARKEYWORDS);
+
+        co_stacksize = stacksize;
+        co_consts = constants;
+        co_names = names;
+        co_code = getBytes(codestring);
+        co_lnotab = getBytes(lnotab);
+    }
+================================================================================

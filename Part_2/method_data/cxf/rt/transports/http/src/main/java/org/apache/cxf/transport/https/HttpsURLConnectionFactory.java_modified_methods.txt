@@ -1,0 +1,26 @@
+Method: ReflectionInvokationHandler
+VULNERABLE VERSION:
+ new ReflectionInvokationHandler(verifier) {
+                    public Object invoke(Object proxy,
+                                         Method method,
+                                         Object[] args) throws Throwable {
+                        try {
+                            return super.invoke(proxy, method, args);
+                        } catch (Exception ex) {
+                            return true;
+                        }
+                    }
+                }
+FIXED VERSION:
+ new ReflectionInvokationHandler(verifier) {
+                    public Object invoke(Object proxy,
+                                         Method method,
+                                         Object[] args) throws Throwable {
+                        try {
+                            return super.invoke(proxy, method, args);
+                        } catch (Exception ex) {
+                            return false;
+                        }
+                    }
+                }
+================================================================================

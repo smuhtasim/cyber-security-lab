@@ -1,0 +1,36 @@
+Method: Http11NioProcessor
+VULNERABLE VERSION:
+
+
+
+    public Http11NioProcessor(int maxHttpHeaderSize, NioEndpoint endpoint,
+            int maxTrailerSize) {
+
+        super(endpoint);
+
+        inputBuffer = new InternalNioInputBuffer(request, maxHttpHeaderSize);
+        request.setInputBuffer(inputBuffer);
+
+        outputBuffer = new InternalNioOutputBuffer(response, maxHttpHeaderSize);
+        response.setOutputBuffer(outputBuffer);
+
+        initializeFilters(maxTrailerSize);
+    }
+FIXED VERSION:
+
+
+
+    public Http11NioProcessor(int maxHttpHeaderSize, NioEndpoint endpoint,
+            int maxTrailerSize, int maxExtensionSize) {
+
+        super(endpoint);
+
+        inputBuffer = new InternalNioInputBuffer(request, maxHttpHeaderSize);
+        request.setInputBuffer(inputBuffer);
+
+        outputBuffer = new InternalNioOutputBuffer(response, maxHttpHeaderSize);
+        response.setOutputBuffer(outputBuffer);
+
+        initializeFilters(maxTrailerSize, maxExtensionSize);
+    }
+================================================================================

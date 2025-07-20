@@ -1,0 +1,15 @@
+Method: getIconFileName
+VULNERABLE VERSION:
+
+    public String getIconFileName() {
+        // TODO
+        return null;
+    }
+FIXED VERSION:
+
+
+    public String getIconFileName() {
+        // TODO
+        return null;
+    }
+================================================================================

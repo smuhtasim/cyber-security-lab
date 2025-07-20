@@ -1,0 +1,30 @@
+Method: add
+VULNERABLE VERSION:
+
+  public MultiMap add(CharSequence name, Iterable<CharSequence> values) {
+    headers.add(toLowerCase(name), values);
+    return this;
+  }
+FIXED VERSION:
+
+  public MultiMap add(CharSequence name, Iterable<CharSequence> values) {
+    HttpUtils.validateHeader(name, values);
+    headers.add(toLowerCase(name), values);
+    return this;
+  }
+================================================================================
+Method: set
+VULNERABLE VERSION:
+
+  public MultiMap set(CharSequence name, Iterable<CharSequence> values) {
+    headers.set(toLowerCase(name), values);
+    return this;
+  }
+FIXED VERSION:
+
+  public MultiMap set(CharSequence name, Iterable<CharSequence> values) {
+    HttpUtils.validateHeader(name, values);
+    headers.set(toLowerCase(name), values);
+    return this;
+  }
+================================================================================

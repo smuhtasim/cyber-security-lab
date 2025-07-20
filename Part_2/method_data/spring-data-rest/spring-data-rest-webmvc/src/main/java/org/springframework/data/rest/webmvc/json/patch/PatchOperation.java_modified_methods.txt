@@ -1,0 +1,15 @@
+Method: evaluateValueFromTarget
+VULNERABLE VERSION:
+ Object evaluateValueFromTarget(Object targetObject, Class<T> entityType) {
+
+		return value instanceof LateObjectEvaluator
+				? ((LateObjectEvaluator) value).evaluate(spelExpression.getValueType(targetObject)) : value;
+	}
+FIXED VERSION:
+ Object evaluateValueFromTarget(Object targetObject, Class<T> entityType) {
+
+		verifyPath(entityType);
+
+		return evaluate(spelExpression.getValueType(targetObject));
+	}
+================================================================================

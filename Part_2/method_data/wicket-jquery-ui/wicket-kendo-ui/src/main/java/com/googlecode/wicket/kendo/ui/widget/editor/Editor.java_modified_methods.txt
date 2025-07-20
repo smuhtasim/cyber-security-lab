@@ -1,0 +1,18 @@
+Method: Editor
+VULNERABLE VERSION:
+
+	public Editor(String id, IModel<T> model, Options options)
+	{
+		super(id, model);
+
+		this.options = Args.notNull(options, "options");
+	}
+FIXED VERSION:
+
+	public Editor(String id, IModel<String> model, Options options)
+	{
+		super(id, model);
+
+		this.options = Args.notNull(options, "options");
+	}
+================================================================================

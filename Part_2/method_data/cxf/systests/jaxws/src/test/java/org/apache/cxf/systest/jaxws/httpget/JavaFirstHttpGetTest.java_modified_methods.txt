@@ -1,0 +1,27 @@
+Method: run
+VULNERABLE VERSION:
+        
+        protected void run() {
+            MyImplementation implementor = new MyImplementation();
+            JaxWsServerFactoryBean svrFactory = new JaxWsServerFactoryBean();
+            svrFactory.setServiceClass(MyInterface.class);
+            svrFactory.setAddress(BASE_URL);
+            svrFactory.setServiceBean(implementor);
+            svrFactory.getInInterceptors().add(new LoggingInInterceptor());
+            svrFactory.getOutInterceptors().add(new LoggingOutInterceptor());
+            svrFactory.create();
+        }
+FIXED VERSION:
+
+        protected void run() {
+            MyImplementation implementor = new MyImplementation();
+            JaxWsServerFactoryBean svrFactory = new JaxWsServerFactoryBean();
+            svrFactory.setServiceClass(MyInterface.class);
+            svrFactory.getInInterceptors().add(new URIMappingInterceptor());
+            svrFactory.setAddress(BASE_URL);
+            svrFactory.setServiceBean(implementor);
+            svrFactory.getInInterceptors().add(new LoggingInInterceptor());
+            svrFactory.getOutInterceptors().add(new LoggingOutInterceptor());
+            svrFactory.create();
+        }
+================================================================================

@@ -1,0 +1,30 @@
+Method: resolveSecurely
+VULNERABLE VERSION:
+ Path resolveSecurely(Path rootPath, String path) {
+        Path resolvedPath;
+        if(path == null || path.isEmpty()) {
+            resolvedPath = rootPath.normalize();
+        } else {
+            String relativePath = removeSuperflousSlashes(path);
+            resolvedPath = rootPath.resolve(relativePath).normalize();
+        }
+        if(!resolvedPath.startsWith(rootPath))  {
+            throw DeploymentRepositoryLogger.ROOT_LOGGER.forbiddenPath(path);
+        }
+        return resolvedPath;
+    }
+FIXED VERSION:
+ Path resolveSecurely(Path rootPath, String path) {
+        Path resolvedPath;
+        if(path == null || path.isEmpty()) {
+            resolvedPath = rootPath.normalize();
+        } else {
+            String relativePath = removeSuperflousSlashes(path);
+            resolvedPath = rootPath.resolve(relativePath).normalize();
+        }
+        if(!resolvedPath.startsWith(rootPath)) {
+            throw DeploymentRepositoryLogger.ROOT_LOGGER.forbiddenPath(path);
+        }
+        return resolvedPath;
+    }
+================================================================================

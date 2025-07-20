@@ -1,0 +1,44 @@
+Method: isAllowed
+VULNERABLE VERSION:
+
+    public Result isAllowed(String principalId) {
+        LockoutPolicy lockoutPolicy = lockoutPolicyRetriever.getLockoutPolicy();
+
+        if (!lockoutPolicy.isLockoutEnabled()) {
+            return new Result(true, 0);
+        }
+
+        long eventsAfter = timeService.getCurrentTimeMillis() - lockoutPolicy.getCountFailuresWithin() * 1000;
+        List<AuditEvent> events = auditService.find(principalId, eventsAfter);
+
+        final int failureCount = sequentialFailureCount(events);
+
+        if (failureCount >= lockoutPolicy.getLockoutAfterFailures()) {
+            // Check whether time of most recent failure is within the lockout period
+            AuditEvent lastFailure = mostRecentFailure(events);
+            if (lastFailure != null && lastFailure.getTime() > timeService.getCurrentTimeMillis() - lockoutPolicy.getLockoutPeriodSeconds() * 1000) {
+                return new Result(false, failureCount);
+            }
+        }
+        return new Result(true, failureCount);
+    }
+FIXED VERSION:
+
+    public Result isAllowed(String principalId) {
+        LockoutPolicy lockoutPolicy = lockoutPolicyRetriever.getLockoutPolicy();
+
+        long eventsAfter = timeService.getCurrentTimeMillis() - lockoutPolicy.getCountFailuresWithin() * 1000;
+        List<AuditEvent> events = auditService.find(principalId, eventsAfter);
+
+        final int failureCount = sequentialFailureCount(events);
+
+        if (failureCount >= lockoutPolicy.getLockoutAfterFailures()) {
+            // Check whether time of most recent failure is within the lockout period
+            AuditEvent lastFailure = mostRecentFailure(events);
+            if (lastFailure != null && lastFailure.getTime() > timeService.getCurrentTimeMillis() - lockoutPolicy.getLockoutPeriodSeconds() * 1000) {
+                return new Result(false, failureCount);
+            }
+        }
+        return new Result(true, failureCount);
+    }
+================================================================================

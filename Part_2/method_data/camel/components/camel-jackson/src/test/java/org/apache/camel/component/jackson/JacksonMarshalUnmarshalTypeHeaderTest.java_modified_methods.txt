@@ -1,0 +1,26 @@
+Method: RouteBuilder
+VULNERABLE VERSION:
+ new RouteBuilder() {
+
+            @Override
+            public void configure() throws Exception {
+                JacksonDataFormat format = new JacksonDataFormat();
+                format.setAllowJacksonUnmarshallType(true);
+
+                from("direct:backPojo").unmarshal(format).to("mock:reversePojo");
+
+            }
+        }
+FIXED VERSION:
+ new RouteBuilder() {
+
+            @Override
+            public void configure() throws Exception {
+                JacksonDataFormat format = new JacksonDataFormat();
+                format.setAllowUnmarshallType(true);
+
+                from("direct:backPojo").unmarshal(format).to("mock:reversePojo");
+
+            }
+        }
+================================================================================

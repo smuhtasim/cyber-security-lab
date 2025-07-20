@@ -1,0 +1,151 @@
+Method: nextIterator
+VULNERABLE VERSION:
+ V>> nextIterator(int count) {
+                if ( ! keyIterator.hasNext() ) {
+                    return null;
+                }
+                final K key = keyIterator.next();
+                final Transformer<V, Entry<K, V>> transformer = new Transformer<V, Entry<K, V>>() {
+                    public Entry<K, V> transform(final V input) {
+                        return new Entry<K, V>() {
+                            public K getKey() {
+                                return key;
+                            }
+                            public V getValue() {
+                                return input;
+                            }
+                            public V setValue(V value) {
+                                throw new UnsupportedOperationException();
+                            }
+                        };
+                    }
+                };
+                return new TransformIterator<V, Entry<K, V>>(new ValuesIterator(key), transformer);
+            }
+FIXED VERSION:
+ V>> nextIterator(int count) {
+                if ( ! keyIterator.hasNext() ) {
+                    return null;
+                }
+                final K key = keyIterator.next();
+                final Transformer<V, Entry<K, V>> transformer = new Transformer<V, Entry<K, V>>() {
+                    @Override
+                    public Entry<K, V> transform(final V input) {
+                        return new Entry<K, V>() {
+                            @Override
+                            public K getKey() {
+                                return key;
+                            }
+                            @Override
+                            public V getValue() {
+                                return input;
+                            }
+                            @Override
+                            public V setValue(V value) {
+                                throw new UnsupportedOperationException();
+                            }
+                        };
+                    }
+                };
+                return new TransformIterator<V, Entry<K, V>>(new ValuesIterator(key), transformer);
+            }
+================================================================================
+Method: transform
+VULNERABLE VERSION:
+ V> transform(final V input) {
+                        return new Entry<K, V>() {
+                            public K getKey() {
+                                return key;
+                            }
+                            public V getValue() {
+                                return input;
+                            }
+                            public V setValue(V value) {
+                                throw new UnsupportedOperationException();
+                            }
+                        };
+                    }
+FIXED VERSION:
+ V> transform(final V input) {
+                        return new Entry<K, V>() {
+                            @Override
+                            public K getKey() {
+                                return key;
+                            }
+                            @Override
+                            public V getValue() {
+                                return input;
+                            }
+                            @Override
+                            public V setValue(V value) {
+                                throw new UnsupportedOperationException();
+                            }
+                        };
+                    }
+================================================================================
+Method: remove
+VULNERABLE VERSION:
+
+
+        public void remove() {
+            iterator.remove();
+            if (values.isEmpty()) {
+                MultiValueMap.this.remove(key);
+            }
+        }
+FIXED VERSION:
+
+        public void remove() {
+            iterator.remove();
+            if (values.isEmpty()) {
+                MultiValueMap.this.remove(key);
+            }
+        }
+================================================================================
+Method: hasNext
+VULNERABLE VERSION:
+
+
+        public boolean hasNext() {
+            return iterator.hasNext();
+        }
+FIXED VERSION:
+
+        public boolean hasNext() {
+            return iterator.hasNext();
+        }
+================================================================================
+Method: next
+VULNERABLE VERSION:
+
+
+        public V next() {
+            return iterator.next();
+        }
+FIXED VERSION:
+
+        public V next() {
+            return iterator.next();
+        }
+================================================================================
+Method: create
+VULNERABLE VERSION:
+
+
+        public T create() {
+            try {
+                return clazz.newInstance();
+            } catch (final Exception ex) {
+                throw new FunctorException("Cannot instantiate class: " + clazz, ex);
+            }
+        }
+FIXED VERSION:
+
+        public T create() {
+            try {
+                return clazz.newInstance();
+            } catch (final Exception ex) {
+                throw new FunctorException("Cannot instantiate class: " + clazz, ex);
+            }
+        }
+================================================================================

@@ -1,0 +1,746 @@
+Method: findAncestor
+VULNERABLE VERSION:
+
+    protected Component findAncestor(Class clazz) {
+        Stack componentStack = getComponentStack();
+        int currPosition = componentStack.search(this);
+        if (currPosition >= 0) {
+            int start = componentStack.size() - currPosition - 1;
+
+            //for (int i = componentStack.size() - 2; i >= 0; i--) {
+            for (int i = start; i >=0; i--) {
+                Component component = (Component) componentStack.get(i);
+                if (clazz.isAssignableFrom(component.getClass()) && component != this) {
+                    return component;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Evaluates the OGNL stack to find a String value.
+     * @param expr  OGNL expression.
+     * @return  the String value found.
+     */
+    protected String findString(String expr) {
+        return (String) findValue(expr, String.class);
+    }
+
+    /**
+     * Evaluates the OGNL stack to find a String value.
+     * <br>
+     * If the given expression is <tt>null</tt> a error is logged and a <code>RuntimeException</code> is thrown
+     * constructed with a messaged based on the given field and errorMsg parameter.
+     *
+     * @param expr  OGNL expression.
+     * @param field   field name used when throwing <code>RuntimeException</code>.
+     * @param errorMsg  error message used when throwing <code>RuntimeException</code>.
+     * @return  the String value found.
+     * @throws StrutsException is thrown in case of expression is null.
+     */
+    protected String findString(String expr, String field, String errorMsg) {
+        if (expr == null) {
+            throw fieldError(field, errorMsg, null);
+        } else {
+            return findString(expr);
+        }
+    }
+
+    /**
+     * Constructs a <code>RuntimeException</code> based on the given information.
+     * <br>
+     * A message is constructed and logged at ERROR level before being returned
+     * as a <code>RuntimeException</code>.
+     * @param field   field name used when throwing <code>RuntimeException</code>.
+     * @param errorMsg  error message used when throwing <code>RuntimeException</code>.
+     * @param e  the caused exception, can be <tt>null</tt>.
+     * @return  the constructed <code>StrutsException</code>.
+     */
+    protected StrutsException fieldError(String field, String errorMsg, Exception e) {
+        String msg = "tag '" + getComponentName() + "', field '" + field +
+                ( parameters != null && parameters.containsKey("name")?"', name '" + parameters.get("name"):"") +
+                "': " + errorMsg;
+        throw new StrutsException(msg, e);
+    }
+
+    /**
+     * Finds a value from the OGNL stack based on the given expression.
+     * Will always evaluate <code>expr</code> against stack except when <code>expr</code>
+     * is null. If altsyntax (%{...}) is applied, simply strip it off.
+     *
+     * @param expr  the expression. Returns <tt>null</tt> if expr is null.
+     * @return the value, <tt>null</tt> if not found.
+     */
+    protected Object findValue(String expr) {
+        if (expr == null) {
+            return null;
+        }
+
+        expr = stripExpressionIfAltSyntax(expr);
+
+        return getStack().findValue(expr, throwExceptionOnELFailure);
+    }
+
+    /**
+     * If altsyntax (%{...}) is applied, simply strip the "%{" and "}" off. 
+     * @param expr the expression (must be not null)
+     * @return the stripped expression if altSyntax is enabled. Otherwise
+     * the parameter expression is returned as is.
+     */
+	protected String stripExpressionIfAltSyntax(String expr) {
+		return ComponentUtils.stripExpressionIfAltSyntax(stack, expr);
+	}
+
+    /**
+     * See <code>struts.properties</code> where the altSyntax flag is defined.
+     * @return if the altSyntax enabled? [TRUE]
+     */
+    public boolean altSyntax() {
+        return ComponentUtils.altSyntax(stack);
+    }
+
+    /**
+     * Adds the surrounding %{ } to the expression for proper processing.
+     * @param expr the expression.
+     * @return the modified expression if altSyntax is enabled, or the parameter 
+     * expression otherwise.
+     */
+	protected String completeExpressionIfAltSyntax(String expr) {
+		if (altSyntax()) {
+			return "%{" + expr + "}";
+		}
+		return expr;
+	}
+
+    /**
+     * This check is needed for backwards compatibility with 2.1.x
+     * @param expr the expression.
+     * @return the found string if altSyntax is enabled. The parameter
+     * expression otherwise.
+     */
+	protected String findStringIfAltSyntax(String expr) {
+		if (altSyntax()) {
+		    return findString(expr);
+		}
+		return expr;
+	}
+
+    /**
+     * <p>
+     * Evaluates the OGNL stack to find an Object value.
+     * </p>
+     *
+     * <p>
+     * Function just like <code>findValue(String)</code> except that if the
+     * given expression is <tt>null</tt> a error is logged and
+     * a <code>RuntimeException</code> is thrown constructed with a
+     * messaged based on the given field and errorMsg parameter.
+     * </p>
+     *
+     * @param expr  OGNL expression.
+     * @param field   field name used when throwing <code>RuntimeException</code>.
+     * @param errorMsg  error message used when throwing <code>RuntimeException</code>.
+     * @return  the Object found, is never <tt>null</tt>.
+     * @throws StrutsException is thrown in case of not found in the OGNL stack, or expression is <tt>null</tt>.
+     */
+    protected Object findValue(String expr, String field, String errorMsg) {
+        if (expr == null) {
+            throw fieldError(field, errorMsg, null);
+        } else {
+            Object value = null;
+            Exception problem = null;
+            try {
+                value = findValue(expr);
+            } catch (Exception e) {
+                problem = e;
+            }
+
+            if (value == null) {
+                throw fieldError(field, errorMsg, problem);
+            }
+
+            return value;
+        }
+    }
+
+    /**
+     * Evaluates the OGNL stack to find an Object of the given type. Will evaluate
+     * <code>expr</code> the portion wrapped with altSyntax (%{...})
+     * against stack when altSyntax is on, else the whole <code>expr</code>
+     * is evaluated against the stack.
+     * <br>
+     * This method only supports the altSyntax. So this should be set to true.
+     * @param expr  OGNL expression.
+     * @param toType  the type expected to find.
+     * @return  the Object found, or <tt>null</tt> if not found.
+     */
+    protected Object findValue(String expr, Class toType) {
+        if (altSyntax() && toType == String.class) {
+        	return TextParseUtil.translateVariables('%', expr, stack);
+        } else {
+            expr = stripExpressionIfAltSyntax(expr);
+
+            return getStack().findValue(expr, toType, throwExceptionOnELFailure);
+        }
+    }
+
+    /**
+     * Renders an action URL by consulting the {@link org.apache.struts2.dispatcher.mapper.ActionMapper}.
+     * @param action      the action
+     * @param namespace   the namespace
+     * @param method      the method
+     * @param req         HTTP request
+     * @param res         HTTP response
+     * @param parameters  parameters
+     * @param scheme      http or https
+     * @param includeContext  should the context path be included or not
+     * @param encodeResult    should the url be encoded
+     * @param forceAddSchemeHostAndPort    should the scheme host and port be forced
+     * @param escapeAmp    should ampersand (&amp;) be escaped to &amp;amp;
+     * @return the action url.
+     */
+    protected String determineActionURL(String action, String namespace, String method,
+                                        HttpServletRequest req, HttpServletResponse res, Map parameters, String scheme,
+                                        boolean includeContext, boolean encodeResult, boolean forceAddSchemeHostAndPort,
+                                        boolean escapeAmp) {
+        String finalAction = findString(action);
+        String finalMethod = method != null ? findString(method) : null;
+        String finalNamespace = determineNamespace(namespace, getStack(), req);
+        ActionMapping mapping = new ActionMapping(finalAction, finalNamespace, finalMethod, parameters);
+        String uri = actionMapper.getUriFromActionMapping(mapping);
+        return urlHelper.buildUrl(uri, req, res, parameters, scheme, includeContext, encodeResult, forceAddSchemeHostAndPort, escapeAmp);
+    }
+
+    /**
+     * Determines the namespace of the current page being renderdd. Useful for Form, URL, and href generations.
+     * @param namespace  the namespace
+     * @param stack      OGNL value stack
+     * @param req        HTTP request
+     * @return  the namepsace of the current page being rendered, is never <tt>null</tt>.
+     */
+    protected String determineNamespace(String namespace, ValueStack stack, HttpServletRequest req) {
+        String result;
+
+        if (namespace == null) {
+            result = TagUtils.buildNamespace(actionMapper, stack, req);
+        } else {
+            result = findString(namespace);
+        }
+
+        if (result == null) {
+            result = "";
+        }
+
+        return result;
+    }
+
+    /**
+     * Pushes this component's parameter Map as well as the component itself on to the stack
+     * and then copies the supplied parameters over. Because the component's parameter Map is
+     * pushed before the component itself, any key-value pair that can't be assigned to component
+     * will be set in the parameters Map.
+     *
+     * @param params  the parameters to copy.
+     */
+    public void copyParams(Map params) {
+        stack.push(parameters);
+        stack.push(this);
+        try {
+            for (Object o : params.entrySet()) {
+                Map.Entry entry = (Map.Entry) o;
+                String key = (String) entry.getKey();
+
+                if (key.indexOf('-') >= 0) {
+                    // UI component attributes may contain hypens (e.g. data-ajax), but ognl
+                    // can't handle that, and there can't be a component property with a hypen
+                    // so into the parameters map it goes. See WW-4493
+                    parameters.put(key, entry.getValue());
+                } else {
+                    stack.setValue(key, entry.getValue());
+                }
+            }
+        } finally {
+            stack.pop();
+            stack.pop();
+        }
+    }
+
+    /**
+     * Constructs a string representation of the given exception.
+     * @param t  the exception
+     * @return the exception as a string.
+     */
+    protected String toString(Throwable t) {
+        try (FastByteArrayOutputStream bout = new FastByteArrayOutputStream();
+                PrintWriter wrt = new PrintWriter(bout)) {
+            t.printStackTrace(wrt);
+            return bout.toString();
+        }
+    }
+
+    /**
+     * Gets the parameters.
+     * @return the parameters. Is never <tt>null</tt>.
+     */
+    public Map getParameters() {
+        return parameters;
+    }
+
+    /**
+     * Adds all the given parameters to this component's own parameters.
+     * @param params the parameters to add.
+     */
+    public void addAllParameters(Map params) {
+        parameters.putAll(params);
+    }
+
+    /**
+     * Adds the given key and value to this component's own parameter.
+     * <br>
+     * If the provided key is <tt>null</tt> nothing happens.
+     * If the provided value is <tt>null</tt> any existing parameter with
+     * the given key name is removed.
+     * @param key  the key of the new parameter to add.
+     * @param value the value associated with the key.
+     */
+    public void addParameter(String key, Object value) {
+        if (key != null) {
+            Map params = getParameters();
+
+            if (value == null) {
+                params.remove(key);
+            } else {
+                params.put(key, value);
+            }
+        }
+    }
+
+    /**
+     * Overwrite to set if body should be used.
+     * @return always false for this component.
+     */
+    public boolean usesBody() {
+        return false;
+    }
+
+    /**
+     * Checks if provided name is a valid tag's attribute
+     *
+     * @param attrName String name of attribute
+     * @return true if attribute with the same name was already defined
+     */
+    public boolean isValidTagAttribute(String attrName) {
+        return getStandardAttributes().contains(attrName);
+    }
+
+    /**
+     * If needed caches all methods annotated by given annotation to avoid further scans
+     *
+     * @return list of attributes
+     */
+    protected Collection<String> getStandardAttributes() {
+        Class clz = getClass();
+        Collection<String> standardAttributes = standardAttributesMap.get(clz);
+        if (standardAttributes == null) {
+            Collection<Method> methods = AnnotationUtils.getAnnotatedMethods(clz, StrutsTagAttribute.class);
+            standardAttributes = new HashSet<>(methods.size());
+            for(Method m : methods) {
+                standardAttributes.add(StringUtils.uncapitalize(m.getName().substring(3)));
+            }
+            standardAttributesMap.putIfAbsent(clz, standardAttributes);
+        }
+        return standardAttributes;
+    }
+
+}
+FIXED VERSION:
+
+    protected Component findAncestor(Class clazz) {
+        Stack componentStack = getComponentStack();
+        int currPosition = componentStack.search(this);
+        if (currPosition >= 0) {
+            int start = componentStack.size() - currPosition - 1;
+
+            //for (int i = componentStack.size() - 2; i >= 0; i--) {
+            for (int i = start; i >=0; i--) {
+                Component component = (Component) componentStack.get(i);
+                if (clazz.isAssignableFrom(component.getClass()) && component != this) {
+                    return component;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Evaluates the OGNL stack to find a String value.
+     * @param expr  OGNL expression.
+     * @return  the String value found.
+     */
+    protected String findString(String expr) {
+        return (String) findValue(expr, String.class);
+    }
+
+    /**
+     * Evaluates the OGNL stack to find a String value.
+     * <br>
+     * If the given expression is <tt>null</tt> a error is logged and a <code>RuntimeException</code> is thrown
+     * constructed with a messaged based on the given field and errorMsg parameter.
+     *
+     * @param expr  OGNL expression.
+     * @param field   field name used when throwing <code>RuntimeException</code>.
+     * @param errorMsg  error message used when throwing <code>RuntimeException</code>.
+     * @return  the String value found.
+     * @throws StrutsException is thrown in case of expression is null.
+     */
+    protected String findString(String expr, String field, String errorMsg) {
+        if (expr == null) {
+            throw fieldError(field, errorMsg, null);
+        } else {
+            return findString(expr);
+        }
+    }
+
+    /**
+     * Constructs a <code>RuntimeException</code> based on the given information.
+     * <br>
+     * A message is constructed and logged at ERROR level before being returned
+     * as a <code>RuntimeException</code>.
+     * @param field   field name used when throwing <code>RuntimeException</code>.
+     * @param errorMsg  error message used when throwing <code>RuntimeException</code>.
+     * @param e  the caused exception, can be <tt>null</tt>.
+     * @return  the constructed <code>StrutsException</code>.
+     */
+    protected StrutsException fieldError(String field, String errorMsg, Exception e) {
+        String msg = "tag '" + getComponentName() + "', field '" + field +
+                ( parameters != null && parameters.containsKey("name")?"', name '" + parameters.get("name"):"") +
+                "': " + errorMsg;
+        throw new StrutsException(msg, e);
+    }
+
+    /**
+     * Finds a value from the OGNL stack based on the given expression.
+     * Will always evaluate <code>expr</code> against stack except when <code>expr</code>
+     * is null. If altsyntax (%{...}) is applied, simply strip it off.
+     *
+     * @param expr  the expression. Returns <tt>null</tt> if expr is null.
+     * @return the value, <tt>null</tt> if not found.
+     */
+    protected Object findValue(String expr) {
+        if (expr == null) {
+            return null;
+        }
+
+        expr = stripExpressionIfAltSyntax(expr);
+
+        return getStack().findValue(expr, throwExceptionOnELFailure);
+    }
+
+    /**
+     * If altsyntax (%{...}) is applied, simply strip the "%{" and "}" off. 
+     * @param expr the expression (must be not null)
+     * @return the stripped expression if altSyntax is enabled. Otherwise
+     * the parameter expression is returned as is.
+     */
+	protected String stripExpressionIfAltSyntax(String expr) {
+		return ComponentUtils.stripExpressionIfAltSyntax(stack, expr);
+	}
+
+    /**
+     * See <code>struts.properties</code> where the altSyntax flag is defined.
+     * @return if the altSyntax enabled? [TRUE]
+     */
+    public boolean altSyntax() {
+        return ComponentUtils.altSyntax(stack);
+    }
+
+    /**
+     * Adds the surrounding %{ } to the expression for proper processing.
+     * @param expr the expression.
+     * @return the modified expression if altSyntax is enabled, or the parameter 
+     * expression otherwise.
+     */
+	protected String completeExpressionIfAltSyntax(String expr) {
+		if (altSyntax()) {
+			return "%{" + expr + "}";
+		}
+		return expr;
+	}
+
+    /**
+     * This check is needed for backwards compatibility with 2.1.x
+     * @param expr the expression.
+     * @return the found string if altSyntax is enabled. The parameter
+     * expression otherwise.
+     */
+	protected String findStringIfAltSyntax(String expr) {
+		if (altSyntax()) {
+		    return findString(expr);
+		}
+		return expr;
+	}
+
+    /**
+     * <p>
+     * Evaluates the OGNL stack to find an Object value.
+     * </p>
+     *
+     * <p>
+     * Function just like <code>findValue(String)</code> except that if the
+     * given expression is <tt>null</tt> a error is logged and
+     * a <code>RuntimeException</code> is thrown constructed with a
+     * messaged based on the given field and errorMsg parameter.
+     * </p>
+     *
+     * @param expr  OGNL expression.
+     * @param field   field name used when throwing <code>RuntimeException</code>.
+     * @param errorMsg  error message used when throwing <code>RuntimeException</code>.
+     * @return  the Object found, is never <tt>null</tt>.
+     * @throws StrutsException is thrown in case of not found in the OGNL stack, or expression is <tt>null</tt>.
+     */
+    protected Object findValue(String expr, String field, String errorMsg) {
+        if (expr == null) {
+            throw fieldError(field, errorMsg, null);
+        } else {
+            Object value = null;
+            Exception problem = null;
+            try {
+                value = findValue(expr);
+            } catch (Exception e) {
+                problem = e;
+            }
+
+            if (value == null) {
+                throw fieldError(field, errorMsg, problem);
+            }
+
+            return value;
+        }
+    }
+
+    /**
+     * Evaluates the OGNL stack to find an Object of the given type. Will evaluate
+     * <code>expr</code> the portion wrapped with altSyntax (%{...})
+     * against stack when altSyntax is on, else the whole <code>expr</code>
+     * is evaluated against the stack.
+     * <br>
+     * This method only supports the altSyntax. So this should be set to true.
+     * @param expr  OGNL expression.
+     * @param toType  the type expected to find.
+     * @return  the Object found, or <tt>null</tt> if not found.
+     */
+    protected Object findValue(String expr, Class toType) {
+        if (altSyntax() && toType == String.class) {
+            if (ComponentUtils.containsExpression(expr)) {
+                return TextParseUtil.translateVariables('%', expr, stack);
+            } else {
+                return expr;
+            }
+        } else {
+            expr = stripExpressionIfAltSyntax(expr);
+
+            return getStack().findValue(expr, toType, throwExceptionOnELFailure);
+        }
+    }
+
+    /**
+     * Renders an action URL by consulting the {@link org.apache.struts2.dispatcher.mapper.ActionMapper}.
+     * @param action      the action
+     * @param namespace   the namespace
+     * @param method      the method
+     * @param req         HTTP request
+     * @param res         HTTP response
+     * @param parameters  parameters
+     * @param scheme      http or https
+     * @param includeContext  should the context path be included or not
+     * @param encodeResult    should the url be encoded
+     * @param forceAddSchemeHostAndPort    should the scheme host and port be forced
+     * @param escapeAmp    should ampersand (&amp;) be escaped to &amp;amp;
+     * @return the action url.
+     */
+    protected String determineActionURL(String action, String namespace, String method,
+                                        HttpServletRequest req, HttpServletResponse res, Map parameters, String scheme,
+                                        boolean includeContext, boolean encodeResult, boolean forceAddSchemeHostAndPort,
+                                        boolean escapeAmp) {
+        String finalAction = findString(action);
+        String finalMethod = method != null ? findString(method) : null;
+        String finalNamespace = determineNamespace(namespace, getStack(), req);
+        ActionMapping mapping = new ActionMapping(finalAction, finalNamespace, finalMethod, parameters);
+        String uri = actionMapper.getUriFromActionMapping(mapping);
+        return urlHelper.buildUrl(uri, req, res, parameters, scheme, includeContext, encodeResult, forceAddSchemeHostAndPort, escapeAmp);
+    }
+
+    /**
+     * Determines the namespace of the current page being renderdd. Useful for Form, URL, and href generations.
+     * @param namespace  the namespace
+     * @param stack      OGNL value stack
+     * @param req        HTTP request
+     * @return  the namepsace of the current page being rendered, is never <tt>null</tt>.
+     */
+    protected String determineNamespace(String namespace, ValueStack stack, HttpServletRequest req) {
+        String result;
+
+        if (namespace == null) {
+            result = TagUtils.buildNamespace(actionMapper, stack, req);
+        } else {
+            result = findString(namespace);
+        }
+
+        if (result == null) {
+            result = "";
+        }
+
+        return result;
+    }
+
+    /**
+     * Pushes this component's parameter Map as well as the component itself on to the stack
+     * and then copies the supplied parameters over. Because the component's parameter Map is
+     * pushed before the component itself, any key-value pair that can't be assigned to component
+     * will be set in the parameters Map.
+     *
+     * @param params  the parameters to copy.
+     */
+    public void copyParams(Map params) {
+        stack.push(parameters);
+        stack.push(this);
+        try {
+            for (Object o : params.entrySet()) {
+                Map.Entry entry = (Map.Entry) o;
+                String key = (String) entry.getKey();
+
+                if (key.indexOf('-') >= 0) {
+                    // UI component attributes may contain hypens (e.g. data-ajax), but ognl
+                    // can't handle that, and there can't be a component property with a hypen
+                    // so into the parameters map it goes. See WW-4493
+                    parameters.put(key, entry.getValue());
+                } else {
+                    stack.setValue(key, entry.getValue());
+                }
+            }
+        } finally {
+            stack.pop();
+            stack.pop();
+        }
+    }
+
+    /**
+     * Constructs a string representation of the given exception.
+     * @param t  the exception
+     * @return the exception as a string.
+     */
+    protected String toString(Throwable t) {
+        try (FastByteArrayOutputStream bout = new FastByteArrayOutputStream();
+                PrintWriter wrt = new PrintWriter(bout)) {
+            t.printStackTrace(wrt);
+            return bout.toString();
+        }
+    }
+
+    /**
+     * Gets the parameters.
+     * @return the parameters. Is never <tt>null</tt>.
+     */
+    public Map getParameters() {
+        return parameters;
+    }
+
+    /**
+     * Adds all the given parameters to this component's own parameters.
+     * @param params the parameters to add.
+     */
+    public void addAllParameters(Map params) {
+        parameters.putAll(params);
+    }
+
+    /**
+     * Adds the given key and value to this component's own parameter.
+     * <br>
+     * If the provided key is <tt>null</tt> nothing happens.
+     * If the provided value is <tt>null</tt> any existing parameter with
+     * the given key name is removed.
+     * @param key  the key of the new parameter to add.
+     * @param value the value associated with the key.
+     */
+    public void addParameter(String key, Object value) {
+        if (key != null) {
+            Map params = getParameters();
+
+            if (value == null) {
+                params.remove(key);
+            } else {
+                params.put(key, value);
+            }
+        }
+    }
+
+    /**
+     * Overwrite to set if body should be used.
+     * @return always false for this component.
+     */
+    public boolean usesBody() {
+        return false;
+    }
+
+    /**
+     * Checks if provided name is a valid tag's attribute
+     *
+     * @param attrName String name of attribute
+     * @return true if attribute with the same name was already defined
+     */
+    public boolean isValidTagAttribute(String attrName) {
+        return getStandardAttributes().contains(attrName);
+    }
+
+    /**
+     * If needed caches all methods annotated by given annotation to avoid further scans
+     *
+     * @return list of attributes
+     */
+    protected Collection<String> getStandardAttributes() {
+        Class clz = getClass();
+        Collection<String> standardAttributes = standardAttributesMap.get(clz);
+        if (standardAttributes == null) {
+            Collection<Method> methods = AnnotationUtils.getAnnotatedMethods(clz, StrutsTagAttribute.class);
+            standardAttributes = new HashSet<>(methods.size());
+            for(Method m : methods) {
+                standardAttributes.add(StringUtils.uncapitalize(m.getName().substring(3)));
+            }
+            standardAttributesMap.putIfAbsent(clz, standardAttributes);
+        }
+        return standardAttributes;
+    }
+
+}
+================================================================================
+Method: findValue
+VULNERABLE VERSION:
+
+    protected Object findValue(String expr, Class toType) {
+        if (altSyntax() && toType == String.class) {
+        	return TextParseUtil.translateVariables('%', expr, stack);
+        } else {
+            expr = stripExpressionIfAltSyntax(expr);
+
+            return getStack().findValue(expr, toType, throwExceptionOnELFailure);
+        }
+    }
+FIXED VERSION:
+
+    protected Object findValue(String expr, Class toType) {
+        if (altSyntax() && toType == String.class) {
+            if (ComponentUtils.containsExpression(expr)) {
+                return TextParseUtil.translateVariables('%', expr, stack);
+            } else {
+                return expr;
+            }
+        } else {
+            expr = stripExpressionIfAltSyntax(expr);
+
+            return getStack().findValue(expr, toType, throwExceptionOnELFailure);
+        }
+    }
+================================================================================

@@ -1,0 +1,88 @@
+Method: setPageSeparator
+VULNERABLE VERSION:
+
+    public void setPageSeparator(String pageSeparator) {
+        Matcher m = ALLOWABLE_PAGE_SEPARATORS_PATTERN.matcher(pageSeparator);
+        if (! m.find()) {
+            throw new IllegalArgumentException(pageSeparator + " contains illegal characters.\n"+
+            "If you trust this value, set it with setTrustedPageSeparator");
+        }
+        this.pageSeparator = pageSeparator;
+    }
+FIXED VERSION:
+
+    public void setPageSeparator(String pageSeparator) {
+        Matcher m = ALLOWABLE_PAGE_SEPARATORS_PATTERN.matcher(pageSeparator);
+        if (! m.find()) {
+            throw new IllegalArgumentException(pageSeparator + " contains illegal characters.\n"+
+            "If you trust this value, set it with setTrustedPageSeparator");
+        }
+        setTrustedPageSeparator(pageSeparator);
+    }
+================================================================================
+Method: setColorspace
+VULNERABLE VERSION:
+
+    public void setColorspace(String colorspace) {
+        if (!colorspace.equals(null)) {
+            this.colorspace = colorspace;
+        } else {
+            throw new IllegalArgumentException("Colorspace value cannot be null.");
+        }
+    }
+FIXED VERSION:
+
+    public void setColorspace(String colorspace) {
+        if (colorspace == null) {
+            throw new IllegalArgumentException("Colorspace value cannot be null.");
+        }
+        if (! colorspace.matches("(?i)^[-_A-Z0-9]+$")) {
+            throw new IllegalArgumentException("colorspace must match this pattern: (?i)^[-_A-Z0-9]+$");
+        }
+        this.colorspace = colorspace;
+    }
+================================================================================
+Method: addOtherTesseractConfig
+VULNERABLE VERSION:
+
+    public void addOtherTesseractConfig(String key, String value) {
+        if (key == null) {
+            throw new IllegalArgumentException("key must not be null");
+        }
+        if (value == null) {
+            throw new IllegalArgumentException("value must not be null");
+        }
+
+        Matcher m = ALLOWABLE_OTHER_PARAMS_PATTERN.matcher(key);
+        if (! m.find()) {
+            throw new IllegalArgumentException("Value contains illegal characters: "+key);
+        }
+        m.reset(value);
+        if (! m.find()) {
+            throw new IllegalArgumentException("Value contains illegal characters: "+value);
+        }
+
+        otherTesseractConfig.put(key.trim(), value.trim());
+    }
+FIXED VERSION:
+
+    public void addOtherTesseractConfig(String key, String value) {
+        if (key == null) {
+            throw new IllegalArgumentException("key must not be null");
+        }
+        if (value == null) {
+            throw new IllegalArgumentException("value must not be null");
+        }
+
+        Matcher m = ALLOWABLE_OTHER_PARAMS_PATTERN.matcher(key);
+        if (! m.find()) {
+            throw new IllegalArgumentException("Key contains illegal characters: "+key);
+        }
+        m.reset(value);
+        if (! m.find()) {
+            throw new IllegalArgumentException("Value contains illegal characters: "+value);
+        }
+
+        otherTesseractConfig.put(key.trim(), value.trim());
+    }
+================================================================================

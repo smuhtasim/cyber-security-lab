@@ -1,0 +1,22 @@
+Method: FilterChain
+VULNERABLE VERSION:
+ new FilterChain() {
+
+			@Override
+			public void doFilter(ServletRequest filterRequest,
+					ServletResponse filterResponse) throws IOException, ServletException {
+				assertEquals("Invalid method", "POST",
+						((HttpServletRequest) filterRequest).getMethod());
+			}
+		}
+FIXED VERSION:
+ new FilterChain() {
+
+			@Override
+			public void doFilter(ServletRequest filterRequest,
+					ServletResponse filterResponse) throws IOException, ServletException {
+				assertEquals("Invalid method", expectedMethod,
+						((HttpServletRequest) filterRequest).getMethod());
+			}
+		}
+================================================================================

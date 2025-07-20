@@ -1,0 +1,22 @@
+Method: interpolate
+VULNERABLE VERSION:
+ Object> interpolate(@RequestBody Map<String, Object> requestBody,
+      RequestUuid requestUuid,
+      UserContext userContext) {
+    return eventAuditLogService.auditEvents(requestUuid, userContext, (eventAuditRecordParameters ->
+          jsonInterpolationService
+            .interpolateCredHubReferences(requestBody, eventAuditRecordParameters))
+    );
+  }
+FIXED VERSION:
+ Object> interpolate(
+      @RequestBody Map<String, Object> requestBody,
+      RequestUuid requestUuid,
+      UserContext userContext
+  ) {
+    return eventAuditLogService.auditEvents(requestUuid, userContext, (eventAuditRecordParametersList ->
+          jsonInterpolationService
+            .interpolateCredHubReferences(userContext, requestBody, eventAuditRecordParametersList))
+    );
+  }
+================================================================================

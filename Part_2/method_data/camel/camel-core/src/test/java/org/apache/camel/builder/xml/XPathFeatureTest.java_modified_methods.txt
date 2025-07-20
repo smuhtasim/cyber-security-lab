@@ -1,0 +1,16 @@
+Method: createExchange
+VULNERABLE VERSION:
+
+    
+    protected Exchange createExchange(Object xml) {
+        Exchange exchange = createExchangeWithBody(context, xml);
+        return exchange;
+    }
+FIXED VERSION:
+
+
+    protected Exchange createExchange(Object xml) {
+        Exchange exchange = createExchangeWithBody(context, xml);
+        return exchange;
+    }
+================================================================================

@@ -1,0 +1,22 @@
+Method: build
+VULNERABLE VERSION:
+
+
+    public CIMInstance build(){
+        CIMInstance instance = new CIMInstance(name, host, port, credentialId);
+        instance.setUseSSL(useSSL);
+        instance.setUser(user);
+        instance.setPassword(password);
+
+        return instance;
+    }
+FIXED VERSION:
+
+
+    public CIMInstance build(){
+        CIMInstance instance = new CIMInstance(name, host, port, credentialId);
+        instance.setUseSSL(useSSL);
+
+        return instance;
+    }
+================================================================================

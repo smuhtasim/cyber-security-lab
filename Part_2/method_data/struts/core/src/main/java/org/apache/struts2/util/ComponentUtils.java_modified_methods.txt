@@ -1,0 +1,13 @@
+Method: isExpression
+VULNERABLE VERSION:
+
+    public static boolean isExpression(Object value) {
+        String expr = value.toString();
+        return expr.startsWith("%{") && expr.endsWith("}");
+    }
+FIXED VERSION:
+
+    public static boolean isExpression(String expr) {
+        return expr.startsWith("%{") && expr.endsWith("}");
+    }
+================================================================================

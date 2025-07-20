@@ -1,0 +1,16 @@
+Method: makeTokenSignature
+VULNERABLE VERSION:
+
+    protected String makeTokenSignature(long tokenExpiryTime, UserDetails userDetails) {
+        String expectedTokenSignature = DigestUtils.md5Hex(userDetails.getUsername() + ":" + tokenExpiryTime + ":"
+                + "N/A" + ":" + getKey());
+        return expectedTokenSignature;
+    }
+FIXED VERSION:
+
+    protected String makeTokenSignature(long tokenExpiryTime, UserDetails userDetails) {
+        String expectedTokenSignature = MAC.mac(userDetails.getUsername() + ":" + tokenExpiryTime + ":"
+                + "N/A" + ":" + getKey());
+        return expectedTokenSignature;
+    }
+================================================================================

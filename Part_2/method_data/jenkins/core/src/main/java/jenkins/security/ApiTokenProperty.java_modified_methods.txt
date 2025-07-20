@@ -1,0 +1,12 @@
+Method: newInstance
+VULNERABLE VERSION:
+
+        public ApiTokenProperty newInstance(User user) {
+            return new ApiTokenProperty(Util.getDigestOf(Jenkins.getInstance().getSecretKey() + ":" + user.getId()));
+        }
+FIXED VERSION:
+
+        public ApiTokenProperty newInstance(User user) {
+            return new ApiTokenProperty(API_KEY_SEED.mac(user.getId()));
+        }
+================================================================================

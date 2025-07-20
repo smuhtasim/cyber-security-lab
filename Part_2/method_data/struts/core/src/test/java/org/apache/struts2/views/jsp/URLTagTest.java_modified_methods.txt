@@ -1,0 +1,14 @@
+Method: setTitle
+VULNERABLE VERSION:
+
+
+        public void setTitle(String title) {
+            this.title = title;
+        }
+FIXED VERSION:
+
+
+		public void setTitle(String title) {
+            this.title = title;
+        }
+================================================================================

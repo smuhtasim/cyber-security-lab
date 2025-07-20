@@ -1,0 +1,17 @@
+Method: setByteChunk
+VULNERABLE VERSION:
+
+
+
+    void setByteChunk( ByteChunk mb ) {
+        initialized = (mb!=null);
+        bc = mb;
+    }
+FIXED VERSION:
+
+
+
+    void setByteChunk( ByteChunk mb ) {
+        bc = mb;
+    }
+================================================================================

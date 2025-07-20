@@ -1,0 +1,93 @@
+Method: createBootstrapContainer
+VULNERABLE VERSION:
+
+
+    protected Container createBootstrapContainer(List<ContainerProvider> providers) {
+        ContainerBuilder builder = new ContainerBuilder();
+        boolean fmFactoryRegistered = false;
+        for (ContainerProvider provider : providers) {
+            if (provider instanceof FileManagerProvider) {
+                provider.register(builder, null);
+            }
+            if (provider instanceof FileManagerFactoryProvider) {
+                provider.register(builder, null);
+                fmFactoryRegistered = true;
+            }
+        }
+        builder.factory(ObjectFactory.class, Scope.SINGLETON);
+        builder.factory(FileManager.class, "system", DefaultFileManager.class, Scope.SINGLETON);
+        if (!fmFactoryRegistered) {
+            builder.factory(FileManagerFactory.class, DefaultFileManagerFactory.class, Scope.SINGLETON);
+        }
+        builder.factory(ReflectionProvider.class, OgnlReflectionProvider.class, Scope.SINGLETON);
+        builder.factory(ValueStackFactory.class, OgnlValueStackFactory.class, Scope.SINGLETON);
+
+        builder.factory(XWorkConverter.class, Scope.SINGLETON);
+        builder.factory(ConversionPropertiesProcessor.class, DefaultConversionPropertiesProcessor.class, Scope.SINGLETON);
+        builder.factory(ConversionFileProcessor.class, DefaultConversionFileProcessor.class, Scope.SINGLETON);
+        builder.factory(ConversionAnnotationProcessor.class, DefaultConversionAnnotationProcessor.class, Scope.SINGLETON);
+        builder.factory(TypeConverterCreator.class, DefaultTypeConverterCreator.class, Scope.SINGLETON);
+        builder.factory(TypeConverterHolder.class, DefaultTypeConverterHolder.class, Scope.SINGLETON);
+
+        builder.factory(XWorkBasicConverter.class, Scope.SINGLETON);
+        builder.factory(TypeConverter.class, XWorkConstants.COLLECTION_CONVERTER,  CollectionConverter.class, Scope.SINGLETON);
+        builder.factory(TypeConverter.class, XWorkConstants.ARRAY_CONVERTER, ArrayConverter.class, Scope.SINGLETON);
+        builder.factory(TypeConverter.class, XWorkConstants.DATE_CONVERTER, DateConverter.class, Scope.SINGLETON);
+        builder.factory(TypeConverter.class, XWorkConstants.NUMBER_CONVERTER,  NumberConverter.class, Scope.SINGLETON);
+        builder.factory(TypeConverter.class, XWorkConstants.STRING_CONVERTER, StringConverter.class, Scope.SINGLETON);
+        builder.factory(TextProvider.class, "system", DefaultTextProvider.class, Scope.SINGLETON);
+        builder.factory(ObjectTypeDeterminer.class, DefaultObjectTypeDeterminer.class, Scope.SINGLETON);
+        builder.factory(PropertyAccessor.class, CompoundRoot.class.getName(), CompoundRootAccessor.class, Scope.SINGLETON);
+        builder.factory(OgnlUtil.class, Scope.SINGLETON);
+        builder.constant(XWorkConstants.DEV_MODE, "false");
+        builder.constant(XWorkConstants.LOG_MISSING_PROPERTIES, "false");
+        builder.constant(XWorkConstants.RELOAD_XML_CONFIGURATION, "false");
+        return builder.create(true);
+    }
+FIXED VERSION:
+
+
+    protected Container createBootstrapContainer(List<ContainerProvider> providers) {
+        ContainerBuilder builder = new ContainerBuilder();
+        boolean fmFactoryRegistered = false;
+        for (ContainerProvider provider : providers) {
+            if (provider instanceof FileManagerProvider) {
+                provider.register(builder, null);
+            }
+            if (provider instanceof FileManagerFactoryProvider) {
+                provider.register(builder, null);
+                fmFactoryRegistered = true;
+            }
+        }
+        builder.factory(ObjectFactory.class, Scope.SINGLETON);
+        builder.factory(FileManager.class, "system", DefaultFileManager.class, Scope.SINGLETON);
+        if (!fmFactoryRegistered) {
+            builder.factory(FileManagerFactory.class, DefaultFileManagerFactory.class, Scope.SINGLETON);
+        }
+        builder.factory(ReflectionProvider.class, OgnlReflectionProvider.class, Scope.SINGLETON);
+        builder.factory(ValueStackFactory.class, OgnlValueStackFactory.class, Scope.SINGLETON);
+
+        builder.factory(XWorkConverter.class, Scope.SINGLETON);
+        builder.factory(ConversionPropertiesProcessor.class, DefaultConversionPropertiesProcessor.class, Scope.SINGLETON);
+        builder.factory(ConversionFileProcessor.class, DefaultConversionFileProcessor.class, Scope.SINGLETON);
+        builder.factory(ConversionAnnotationProcessor.class, DefaultConversionAnnotationProcessor.class, Scope.SINGLETON);
+        builder.factory(TypeConverterCreator.class, DefaultTypeConverterCreator.class, Scope.SINGLETON);
+        builder.factory(TypeConverterHolder.class, DefaultTypeConverterHolder.class, Scope.SINGLETON);
+
+        builder.factory(XWorkBasicConverter.class, Scope.SINGLETON);
+        builder.factory(TypeConverter.class, XWorkConstants.COLLECTION_CONVERTER,  CollectionConverter.class, Scope.SINGLETON);
+        builder.factory(TypeConverter.class, XWorkConstants.ARRAY_CONVERTER, ArrayConverter.class, Scope.SINGLETON);
+        builder.factory(TypeConverter.class, XWorkConstants.DATE_CONVERTER, DateConverter.class, Scope.SINGLETON);
+        builder.factory(TypeConverter.class, XWorkConstants.NUMBER_CONVERTER,  NumberConverter.class, Scope.SINGLETON);
+        builder.factory(TypeConverter.class, XWorkConstants.STRING_CONVERTER, StringConverter.class, Scope.SINGLETON);
+        builder.factory(TextProvider.class, "system", DefaultTextProvider.class, Scope.SINGLETON);
+        builder.factory(ObjectTypeDeterminer.class, DefaultObjectTypeDeterminer.class, Scope.SINGLETON);
+        builder.factory(PropertyAccessor.class, CompoundRoot.class.getName(), CompoundRootAccessor.class, Scope.SINGLETON);
+        builder.factory(OgnlUtil.class, Scope.SINGLETON);
+        builder.constant(XWorkConstants.DEV_MODE, "false");
+        builder.constant(XWorkConstants.LOG_MISSING_PROPERTIES, "false");
+        builder.constant(XWorkConstants.ENABLE_OGNL_EVAL_EXPRESSION, "false");
+        builder.constant(XWorkConstants.RELOAD_XML_CONFIGURATION, "false");
+        return builder.create(true);
+    }
+================================================================================

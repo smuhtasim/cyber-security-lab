@@ -1,0 +1,59 @@
+Method: getMajorVersion
+VULNERABLE VERSION:
+
+
+	public int getMajorVersion() {
+		return 2;
+	}
+FIXED VERSION:
+
+
+	public int getMajorVersion() {
+		return this.majorVersion;
+	}
+================================================================================
+Method: setMinorVersion
+VULNERABLE VERSION:
+
+
+	public void setMinorVersion(int minorVersion) {
+		if (minorVersion < 3 || minorVersion > 5) {
+			throw new IllegalArgumentException("Only Servlet minor versions between 3 and 5 are supported");
+		}
+		this.minorVersion = minorVersion;
+	}
+FIXED VERSION:
+
+
+	public void setMinorVersion(int minorVersion) {
+		this.minorVersion = minorVersion;
+	}
+================================================================================
+Method: getEffectiveMajorVersion
+VULNERABLE VERSION:
+
+
+	public int getEffectiveMajorVersion() {
+		throw new UnsupportedOperationException();
+	}
+FIXED VERSION:
+
+
+	public int getEffectiveMajorVersion() {
+		return this.effectiveMajorVersion;
+	}
+================================================================================
+Method: getEffectiveMinorVersion
+VULNERABLE VERSION:
+
+
+	public int getEffectiveMinorVersion() {
+		throw new UnsupportedOperationException();
+	}
+FIXED VERSION:
+
+
+	public int getEffectiveMinorVersion() {
+		return this.effectiveMinorVersion;
+	}
+================================================================================

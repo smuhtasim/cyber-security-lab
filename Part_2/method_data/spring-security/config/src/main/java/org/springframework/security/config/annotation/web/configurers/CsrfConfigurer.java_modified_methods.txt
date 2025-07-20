@@ -1,0 +1,24 @@
+Method: CsrfConfigurer
+VULNERABLE VERSION:
+
+	public CsrfConfigurer() {
+	}
+FIXED VERSION:
+
+	public CsrfConfigurer(ApplicationContext context) {
+		this.context = context;
+	}
+================================================================================
+Method: ignoringAntMatchers
+VULNERABLE VERSION:
+
+	public CsrfConfigurer<H> ignoringAntMatchers(String... antPatterns) {
+		return new IgnoreCsrfProtectionRegistry().antMatchers(antPatterns).and();
+	}
+FIXED VERSION:
+
+	public CsrfConfigurer<H> ignoringAntMatchers(String... antPatterns) {
+		return new IgnoreCsrfProtectionRegistry(this.context).antMatchers(antPatterns)
+				.and();
+	}
+================================================================================

@@ -1,0 +1,109 @@
+Method: getPassword
+VULNERABLE VERSION:
+
+
+    public String getPassword() {
+        return password;
+    }
+FIXED VERSION:
+ String getPassword() {
+        return secret.getPlainText();
+    }
+================================================================================
+Method: HudsonInstance
+VULNERABLE VERSION:
+
+
+    public HudsonInstance(String name, String url, String login, String password) {
+        this.name = name;
+        this.url = url;
+        this.login = login;
+        this.password = password;
+
+        initVariables();
+        restoreQueue();
+        initPublisherThread();
+
+    }
+FIXED VERSION:
+
+
+    public HudsonInstance(String name, String url, String login, String password) {
+        this.name = name;
+        this.url = url;
+        this.login = login;
+        this.secret = Secret.fromString(password);
+
+        initVariables();
+        restoreQueue();
+        initPublisherThread();
+    }
+================================================================================
+Method: readResolve
+VULNERABLE VERSION:
+
+    private Object readResolve() {
+        initVariables();
+
+        // let's wait until Hudson's initialized
+        Hudson.getInstance().getExtensionList(ItemListener.class).add(new ItemListener() {
+            @Override
+            public void onLoaded() {
+                restoreQueue();
+                initPublisherThread();
+            }
+        });
+
+        return this;
+    }
+FIXED VERSION:
+
+    private Object readResolve() {
+        // Migrate plaintext password to secret
+        if (password != null) {
+            if (secret == null) {
+                secret = Secret.fromString(password);
+                password = null;
+            }
+        }
+
+        initVariables();
+
+        // let's wait until Hudson's initialized
+        Hudson.getInstance().getExtensionList(ItemListener.class).add(new ItemListener() {
+            @Override
+            public void onLoaded() {
+                restoreQueue();
+                initPublisherThread();
+            }
+        });
+
+        return this;
+    }
+================================================================================
+Method: loadProxy
+VULNERABLE VERSION:
+
+
+    public void loadProxy(){
+        Jenkins j = Jenkins.getInstance();
+        ProxyConfiguration proxy = j!=null ? j.proxy : null;
+        if(proxy != null) {
+            client.getHostConfiguration().setProxy(proxy.name, proxy.port);
+            if(proxy.getUserName() != null)
+                client.getState().setProxyCredentials(AuthScope.ANY,new UsernamePasswordCredentials(proxy.getUserName(),proxy.getPassword()));
+        }
+    }
+FIXED VERSION:
+
+
+    void loadProxy(){
+        Jenkins j = Jenkins.getInstance();
+        ProxyConfiguration proxy = j!=null ? j.proxy : null;
+        if(proxy != null) {
+            client.getHostConfiguration().setProxy(proxy.name, proxy.port);
+            if(proxy.getUserName() != null)
+                client.getState().setProxyCredentials(AuthScope.ANY,new UsernamePasswordCredentials(proxy.getUserName(),proxy.getPassword()));
+        }
+    }
+================================================================================

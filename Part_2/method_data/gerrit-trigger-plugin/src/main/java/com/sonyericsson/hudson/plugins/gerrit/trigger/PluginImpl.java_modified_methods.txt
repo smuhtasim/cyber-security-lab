@@ -1,0 +1,49 @@
+Method: setServers
+VULNERABLE VERSION:
+
+    public void setServers(List<GerritServer> servers) {
+        if (this.servers != servers) {
+            this.servers.clear();
+            this.servers.addAll(servers);
+        }
+    }
+FIXED VERSION:
+
+    public void setServers(List<GerritServer> servers) {
+        checkAdmin();
+        if (this.servers != servers) {
+            this.servers.clear();
+            this.servers.addAll(servers);
+        }
+    }
+================================================================================
+Method: addServer
+VULNERABLE VERSION:
+
+    public List<GerritServer> addServer(GerritServer s) {
+        servers.add(s);
+        return servers;
+    }
+FIXED VERSION:
+
+    public List<GerritServer> addServer(GerritServer s) {
+        checkAdmin();
+        servers.add(s);
+        return servers;
+    }
+================================================================================
+Method: removeServer
+VULNERABLE VERSION:
+
+    public List<GerritServer> removeServer(GerritServer s) {
+        servers.remove(s);
+        return servers;
+    }
+FIXED VERSION:
+
+    public List<GerritServer> removeServer(GerritServer s) {
+        checkAdmin();
+        servers.remove(s);
+        return servers;
+    }
+================================================================================

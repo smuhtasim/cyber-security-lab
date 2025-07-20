@@ -1,0 +1,215 @@
+Method: readAccessToken
+VULNERABLE VERSION:
+
+
+    public void readAccessToken(Set<String> excludedClaims) {
+        tokenServices.setExcludedClaims(excludedClaims);
+        AuthorizationRequest authorizationRequest =new AuthorizationRequest(CLIENT_ID, tokenSupport.requestedAuthScopes);
+        authorizationRequest.setResourceIds(new HashSet<>(tokenSupport.resourceIds));
+        Map<String, String> azParameters = new HashMap<>(authorizationRequest.getRequestParameters());
+        azParameters.put(GRANT_TYPE, AUTHORIZATION_CODE);
+        authorizationRequest.setRequestParameters(azParameters);
+        Authentication userAuthentication = tokenSupport.defaultUserAuthentication;
+
+        Calendar expiresAt = Calendar.getInstance();
+        expiresAt.add(Calendar.MILLISECOND, 3000);
+        Calendar updatedAt = Calendar.getInstance();
+        updatedAt.add(Calendar.MILLISECOND, -1000);
+
+        tokenSupport.approvalStore.addApproval(new Approval()
+            .setUserId(tokenSupport.userId)
+            .setClientId(CLIENT_ID)
+            .setScope(tokenSupport.readScope.get(0))
+            .setExpiresAt(expiresAt.getTime())
+            .setStatus(ApprovalStatus.APPROVED)
+            .setLastUpdatedAt(updatedAt.getTime()), IdentityZoneHolder.get().getId());
+        tokenSupport.approvalStore.addApproval(new Approval()
+            .setUserId(tokenSupport.userId)
+            .setClientId(CLIENT_ID)
+            .setScope(tokenSupport.writeScope.get(0))
+            .setExpiresAt(expiresAt.getTime())
+            .setStatus(ApprovalStatus.APPROVED)
+            .setLastUpdatedAt(updatedAt.getTime()), IdentityZoneHolder.get().getId());
+        Approval approval = new Approval()
+            .setUserId(tokenSupport.userId)
+            .setClientId(CLIENT_ID)
+            .setScope(OPENID)
+            .setExpiresAt(expiresAt.getTime())
+            .setStatus(ApprovalStatus.APPROVED)
+            .setLastUpdatedAt(updatedAt.getTime());
+        tokenSupport.approvalStore.addApproval(
+            approval, IdentityZoneHolder.get().getId());
+
+        OAuth2Authentication authentication = new OAuth2Authentication(authorizationRequest.createOAuth2Request(), userAuthentication);
+        OAuth2AccessToken accessToken = tokenServices.createAccessToken(authentication);
+        assertEquals(accessToken, tokenServices.readAccessToken(accessToken.getValue()));
+
+        tokenSupport.approvalStore.revokeApproval(approval, IdentityZoneHolder.get().getId());
+        try {
+            tokenServices.readAccessToken(accessToken.getValue());
+            fail("Approval has been revoked");
+        } catch (InvalidTokenException x) {
+            assertThat("Exception should be about approvals", x.getMessage().contains("some requested scopes are not approved"));
+        }
+    }
+FIXED VERSION:
+
+
+
+    public void readAccessToken(Set<String> excludedClaims) {
+        tokenServices.setExcludedClaims(excludedClaims);
+        AuthorizationRequest authorizationRequest =new AuthorizationRequest(CLIENT_ID, tokenSupport.requestedAuthScopes);
+        authorizationRequest.setResourceIds(new HashSet<>(tokenSupport.resourceIds));
+        Map<String, String> azParameters = new HashMap<>(authorizationRequest.getRequestParameters());
+        azParameters.put(GRANT_TYPE, AUTHORIZATION_CODE);
+        authorizationRequest.setRequestParameters(azParameters);
+        Authentication userAuthentication = tokenSupport.defaultUserAuthentication;
+
+        Calendar expiresAt = Calendar.getInstance();
+        expiresAt.add(Calendar.MILLISECOND, 3000);
+        Calendar updatedAt = Calendar.getInstance();
+        updatedAt.add(Calendar.MILLISECOND, -1000);
+
+        tokenSupport.approvalStore.addApproval(new Approval()
+            .setUserId(tokenSupport.userId)
+            .setClientId(CLIENT_ID)
+            .setScope(tokenSupport.readScope.get(0))
+            .setExpiresAt(expiresAt.getTime())
+            .setStatus(ApprovalStatus.APPROVED)
+            .setLastUpdatedAt(updatedAt.getTime()), IdentityZoneHolder.get().getId());
+        tokenSupport.approvalStore.addApproval(new Approval()
+            .setUserId(tokenSupport.userId)
+            .setClientId(CLIENT_ID)
+            .setScope(tokenSupport.writeScope.get(0))
+            .setExpiresAt(expiresAt.getTime())
+            .setStatus(ApprovalStatus.APPROVED)
+            .setLastUpdatedAt(updatedAt.getTime()), IdentityZoneHolder.get().getId());
+        Approval approval = new Approval()
+            .setUserId(tokenSupport.userId)
+            .setClientId(CLIENT_ID)
+            .setScope(OPENID)
+            .setExpiresAt(expiresAt.getTime())
+            .setStatus(ApprovalStatus.APPROVED)
+            .setLastUpdatedAt(updatedAt.getTime());
+        tokenSupport.approvalStore.addApproval(
+            approval, IdentityZoneHolder.get().getId());
+
+        OAuth2Authentication authentication = new OAuth2Authentication(authorizationRequest.createOAuth2Request(), userAuthentication);
+        OAuth2AccessToken accessToken = tokenServices.createAccessToken(authentication);
+        assertEquals(accessToken, tokenServices.readAccessToken(accessToken.getValue()));
+
+        tokenSupport.approvalStore.revokeApproval(approval, IdentityZoneHolder.get().getId());
+        try {
+            tokenServices.readAccessToken(accessToken.getValue());
+            fail("Approval has been revoked");
+        } catch (InvalidTokenException x) {
+            assertThat("Exception should be about approvals", x.getMessage().contains("some requested scopes are not approved"));
+        }
+    }
+================================================================================
+Method: loadAuthentication_when_given_an_opaque_refreshToken_should_throw_exception
+VULNERABLE VERSION:
+
+    public void loadAuthentication_when_given_an_opaque_refreshToken_should_throw_exception() {
+        tokenSupport.defaultClient.setAutoApproveScopes(singleton("true"));
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest(CLIENT_ID,tokenSupport.requestedAuthScopes);
+        authorizationRequest.setResponseTypes(new HashSet(Arrays.asList("token")));
+        authorizationRequest.setResourceIds(new HashSet<>(tokenSupport.resourceIds));
+        Map<String, String> azParameters = new HashMap<>(authorizationRequest.getRequestParameters());
+        azParameters.put(GRANT_TYPE, AUTHORIZATION_CODE);
+
+        azParameters.put(REQUEST_TOKEN_FORMAT, TokenConstants.OPAQUE);
+
+        authorizationRequest.setRequestParameters(azParameters);
+        Authentication userAuthentication = tokenSupport.defaultUserAuthentication;
+
+        OAuth2Authentication authentication = new OAuth2Authentication(authorizationRequest.createOAuth2Request(), userAuthentication);
+        OAuth2AccessToken compositeToken = tokenServices.createAccessToken(authentication);
+
+        String refreshTokenValue = tokenProvisioning.retrieve(compositeToken.getRefreshToken().getValue(), IdentityZoneHolder.get().getId()).getValue();
+
+        expectedException.expect(InvalidTokenException.class);
+        expectedException.expectMessage("Invalid access token was provided.");
+
+        tokenServices.loadAuthentication(refreshTokenValue);
+    }
+FIXED VERSION:
+
+    public void loadAuthentication_when_given_an_opaque_refreshToken_should_throw_exception() {
+        tokenSupport.defaultClient.setAutoApproveScopes(singleton("true"));
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest(CLIENT_ID,tokenSupport.requestedAuthScopes);
+        authorizationRequest.setResponseTypes(new HashSet(Arrays.asList("token")));
+        authorizationRequest.setResourceIds(new HashSet<>(tokenSupport.resourceIds));
+        Map<String, String> azParameters = new HashMap<>(authorizationRequest.getRequestParameters());
+        azParameters.put(GRANT_TYPE, AUTHORIZATION_CODE);
+
+        azParameters.put(REQUEST_TOKEN_FORMAT, TokenConstants.OPAQUE);
+
+        authorizationRequest.setRequestParameters(azParameters);
+        Authentication userAuthentication = tokenSupport.defaultUserAuthentication;
+
+        OAuth2Authentication authentication = new OAuth2Authentication(authorizationRequest.createOAuth2Request(), userAuthentication);
+        OAuth2AccessToken compositeToken = tokenServices.createAccessToken(authentication);
+
+        String refreshTokenValue = tokenProvisioning.retrieve(compositeToken.getRefreshToken().getValue(), IdentityZoneHolder.get().getId()).getValue();
+
+        expectedException.expect(InvalidTokenException.class);
+        expectedException.expectMessage("Invalid access token.");
+
+        tokenServices.loadAuthentication(refreshTokenValue);
+    }
+================================================================================
+Method: loadAuthentication_when_given_an_refresh_jwt_should_throw_exception
+VULNERABLE VERSION:
+
+    public void loadAuthentication_when_given_an_refresh_jwt_should_throw_exception() {
+        IdentityZoneHolder.get().getConfig().getTokenPolicy().setJwtRevocable(true);
+        tokenSupport.defaultClient.setAutoApproveScopes(singleton("true"));
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest(CLIENT_ID,tokenSupport.requestedAuthScopes);
+        authorizationRequest.setResponseTypes(new HashSet(Arrays.asList("token")));
+        authorizationRequest.setResourceIds(new HashSet<>(tokenSupport.resourceIds));
+        Map<String, String> azParameters = new HashMap<>(authorizationRequest.getRequestParameters());
+        azParameters.put(GRANT_TYPE, AUTHORIZATION_CODE);
+
+        azParameters.put(REQUEST_TOKEN_FORMAT, JWT.getStringValue());
+
+        authorizationRequest.setRequestParameters(azParameters);
+        Authentication userAuthentication = tokenSupport.defaultUserAuthentication;
+
+        OAuth2Authentication authentication = new OAuth2Authentication(authorizationRequest.createOAuth2Request(), userAuthentication);
+        OAuth2AccessToken compositeToken = tokenServices.createAccessToken(authentication);
+        TokenValidation refreshToken = tokenServices.validateToken(compositeToken.getRefreshToken().getValue());
+
+        String refreshTokenValue = tokenProvisioning.retrieve(refreshToken.getClaims().get("jti").toString(), IdentityZoneHolder.get().getId()).getValue();
+
+        expectedException.expect(InvalidTokenException.class);
+        expectedException.expectMessage("Invalid access token was provided.");
+        tokenServices.loadAuthentication(refreshTokenValue);
+    }
+FIXED VERSION:
+
+    public void loadAuthentication_when_given_an_refresh_jwt_should_throw_exception() {
+        IdentityZoneHolder.get().getConfig().getTokenPolicy().setJwtRevocable(true);
+        tokenSupport.defaultClient.setAutoApproveScopes(singleton("true"));
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest(CLIENT_ID,tokenSupport.requestedAuthScopes);
+        authorizationRequest.setResponseTypes(new HashSet(Arrays.asList("token")));
+        authorizationRequest.setResourceIds(new HashSet<>(tokenSupport.resourceIds));
+        Map<String, String> azParameters = new HashMap<>(authorizationRequest.getRequestParameters());
+        azParameters.put(GRANT_TYPE, AUTHORIZATION_CODE);
+
+        azParameters.put(REQUEST_TOKEN_FORMAT, JWT.getStringValue());
+
+        authorizationRequest.setRequestParameters(azParameters);
+        Authentication userAuthentication = tokenSupport.defaultUserAuthentication;
+
+        OAuth2Authentication authentication = new OAuth2Authentication(authorizationRequest.createOAuth2Request(), userAuthentication);
+        OAuth2AccessToken compositeToken = tokenServices.createAccessToken(authentication);
+        TokenValidation refreshToken = tokenServices.validateToken(compositeToken.getRefreshToken().getValue());
+
+        String refreshTokenValue = tokenProvisioning.retrieve(refreshToken.getClaims().get("jti").toString(), IdentityZoneHolder.get().getId()).getValue();
+
+        expectedException.expect(InvalidTokenException.class);
+        expectedException.expectMessage("Invalid access token.");
+        tokenServices.loadAuthentication(refreshTokenValue);
+    }
+================================================================================

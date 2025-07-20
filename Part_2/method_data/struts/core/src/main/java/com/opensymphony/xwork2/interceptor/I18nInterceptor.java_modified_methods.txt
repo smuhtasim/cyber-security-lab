@@ -1,0 +1,34 @@
+Method: getLocaleFromParam
+VULNERABLE VERSION:
+
+    protected Locale getLocaleFromParam(Object requestedLocale) {
+        Locale locale = null;
+        if (requestedLocale != null) {
+            locale = (requestedLocale instanceof Locale) ?
+                    (Locale) requestedLocale :
+                    LocalizedTextUtil.localeFromString(requestedLocale.toString(), null);
+            if (locale != null) {
+                LOG.debug("Applied request locale: {}", locale);
+            }
+        }
+        return locale;
+    }
+FIXED VERSION:
+
+    protected Locale getLocaleFromParam(Object requestedLocale) {
+        Locale locale = null;
+        if (requestedLocale != null) {
+            locale = (requestedLocale instanceof Locale) ?
+                    (Locale) requestedLocale :
+                    LocalizedTextUtil.localeFromString(requestedLocale.toString(), null);
+            if (locale != null) {
+                LOG.debug("Applied request locale: {}", locale);
+            }
+        }
+
+        if (locale != null && !Arrays.asList(Locale.getAvailableLocales()).contains(locale)) {
+            locale = Locale.getDefault();
+        }
+        return locale;
+    }
+================================================================================

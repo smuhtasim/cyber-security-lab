@@ -1,0 +1,20 @@
+Method: setUp
+VULNERABLE VERSION:
+
+	public void setUp() {
+		converter = new Jaxb2CollectionHttpMessageConverter<Collection<Object>>();
+		rootElementListType = new ParameterizedTypeReference<List<RootElement>>() {}.getType();
+		rootElementSetType = new ParameterizedTypeReference<Set<RootElement>>() {}.getType();
+		typeListType = new ParameterizedTypeReference<List<TestType>>() {}.getType();
+		typeSetType = new ParameterizedTypeReference<Set<TestType>>() {}.getType();
+	}
+FIXED VERSION:
+
+	public void setUp() {
+		converter = new Jaxb2CollectionHttpMessageConverter<>();
+		rootElementListType = new ParameterizedTypeReference<List<RootElement>>() {}.getType();
+		rootElementSetType = new ParameterizedTypeReference<Set<RootElement>>() {}.getType();
+		typeListType = new ParameterizedTypeReference<List<TestType>>() {}.getType();
+		typeSetType = new ParameterizedTypeReference<Set<TestType>>() {}.getType();
+	}
+================================================================================

@@ -1,0 +1,135 @@
+Method: generateCode
+VULNERABLE VERSION:
+
+    public ExpiringCode generateCode(String data, Timestamp expiresAt, String intent) {
+        cleanExpiredEntries();
+
+        if (data == null || expiresAt == null) {
+            throw new NullPointerException();
+        }
+
+        if (expiresAt.getTime() < System.currentTimeMillis()) {
+            throw new IllegalArgumentException();
+        }
+
+        int count = 0;
+        while (count < 3) {
+            count++;
+            String code = generator.generate();
+            try {
+                int update = jdbcTemplate.update(insert, code, expiresAt.getTime(), data, intent);
+                if (update == 1) {
+                    ExpiringCode expiringCode = new ExpiringCode(code, expiresAt, data, intent);
+                    return expiringCode;
+                } else {
+                    logger.warn("Unable to store expiring code:" + code);
+                }
+            } catch (DataIntegrityViolationException x) {
+                if (count == 3) {
+                    throw x;
+                }
+            }
+        }
+
+        return null;
+    }
+FIXED VERSION:
+
+    public ExpiringCode generateCode(String data, Timestamp expiresAt, String intent) {
+        cleanExpiredEntries();
+
+        if (data == null || expiresAt == null) {
+            throw new NullPointerException();
+        }
+
+        if (expiresAt.getTime() < System.currentTimeMillis()) {
+            throw new IllegalArgumentException();
+        }
+
+        int count = 0;
+        while (count < 3) {
+            count++;
+            String code = generator.generate();
+            try {
+                int update = jdbcTemplate.update(insert, zonifyCode(code), expiresAt.getTime(), data, intent);
+                if (update == 1) {
+                    ExpiringCode expiringCode = new ExpiringCode(code, expiresAt, data, intent);
+                    return expiringCode;
+                } else {
+                    logger.warn("Unable to store expiring code:" + code);
+                }
+            } catch (DataIntegrityViolationException x) {
+                if (count == 3) {
+                    throw x;
+                }
+            }
+        }
+
+        return null;
+    }
+================================================================================
+Method: retrieveCode
+VULNERABLE VERSION:
+
+    public ExpiringCode retrieveCode(String code) {
+        cleanExpiredEntries();
+
+        if (code == null) {
+            throw new NullPointerException();
+        }
+
+        try {
+            ExpiringCode expiringCode = jdbcTemplate.queryForObject(select, new JdbcExpiringCodeMapper(), code);
+            try {
+                if (expiringCode != null) {
+                    jdbcTemplate.update(delete, code);
+                }
+                if (expiringCode.getExpiresAt().getTime() < System.currentTimeMillis()) {
+                    expiringCode = null;
+                }
+            } finally {
+                return expiringCode;
+            }
+        } catch (EmptyResultDataAccessException x) {
+            return null;
+        }
+    }
+FIXED VERSION:
+
+    public ExpiringCode retrieveCode(String code) {
+        cleanExpiredEntries();
+
+        if (code == null) {
+            throw new NullPointerException();
+        }
+
+        try {
+            ExpiringCode expiringCode = jdbcTemplate.queryForObject(selectAllFields, rowMapper, zonifyCode(code));
+            if (expiringCode != null) {
+                jdbcTemplate.update(delete, zonifyCode(code));
+            }
+            if (expiringCode.getExpiresAt().getTime() < System.currentTimeMillis()) {
+                expiringCode = null;
+            }
+            return expiringCode;
+        } catch (EmptyResultDataAccessException x) {
+            return null;
+        }
+    }
+================================================================================
+Method: expireByIntent
+VULNERABLE VERSION:
+
+    public void expireByIntent(String intent) {
+        Assert.hasText(intent);
+
+        jdbcTemplate.update(deleteIntent, intent);
+    }
+FIXED VERSION:
+
+    public void expireByIntent(String intent) {
+        Assert.hasText(intent);
+
+        jdbcTemplate.update(deleteIntent, intent, zonifyCode("%")+"%");
+    }
+================================================================================

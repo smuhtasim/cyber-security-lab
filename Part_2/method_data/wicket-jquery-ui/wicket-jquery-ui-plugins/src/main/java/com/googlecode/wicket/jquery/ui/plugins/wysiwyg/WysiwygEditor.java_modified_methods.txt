@@ -1,0 +1,46 @@
+Method: convertInput
+VULNERABLE VERSION:
+
+	public void convertInput()
+	{
+		final PolicyFactory policy = this.newPolicyFactory();
+		final String html = this.textarea.getConvertedInput();
+
+		this.setConvertedInput(policy.sanitize(html));
+	}
+FIXED VERSION:
+
+	public void convertInput()
+	{
+		final PolicyFactory policy = newPolicyFactory();
+		final String input = this.textarea.getConvertedInput();
+
+		this.setConvertedInput(policy.sanitize(input));
+	}
+================================================================================
+Method: newPolicyFactory
+VULNERABLE VERSION:
+
+	protected PolicyFactory newPolicyFactory()
+	{
+		return new HtmlPolicyBuilder() // lf
+				.allowCommonInlineFormattingElements() // lf
+				.allowCommonBlockElements() // lf
+				.allowElements("a").allowAttributes("href", "target").onElements("a") // lf
+				.allowAttributes("size").onElements("font") // lf
+				.allowAttributes("class", "style").globally() // lf
+				.toFactory();
+	}
+FIXED VERSION:
+
+	protected static PolicyFactory newPolicyFactory()
+	{
+		return new HtmlPolicyBuilder() // lf
+				.allowCommonInlineFormattingElements() // lf
+				.allowCommonBlockElements() // lf
+				.allowElements("a").allowAttributes("href", "target").onElements("a") // lf
+				.allowAttributes("size").onElements("font") // lf
+				.allowAttributes("class", "style").globally() // lf
+				.toFactory();
+	}
+================================================================================

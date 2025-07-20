@@ -1,0 +1,41 @@
+Method: doAutoCompleteCopyNewItemFrom
+VULNERABLE VERSION:
+
+    public AutoCompletionCandidates doAutoCompleteCopyNewItemFrom(@QueryParameter final String value, @AncestorInPath ItemGroup<?> container) {
+        // TODO do we need a permissions check here?
+        AutoCompletionCandidates candidates = AutoCompletionCandidates.ofJobNames(TopLevelItem.class, value, container);
+        if (container instanceof DirectlyModifiableTopLevelItemGroup) {
+            DirectlyModifiableTopLevelItemGroup modifiableContainer = (DirectlyModifiableTopLevelItemGroup) container;
+            Iterator<String> it = candidates.getValues().iterator();
+            while (it.hasNext()) {
+                TopLevelItem item = Jenkins.getInstance().getItem(it.next(), container, TopLevelItem.class);
+                if (item == null) {
+                    continue; // ?
+                }
+                if (!modifiableContainer.canAdd(item)) {
+                    it.remove();
+                }
+            }
+        }
+        return candidates;
+    }
+FIXED VERSION:
+
+    public AutoCompletionCandidates doAutoCompleteCopyNewItemFrom(@QueryParameter final String value, @AncestorInPath ItemGroup<?> container) {
+        AutoCompletionCandidates candidates = AutoCompletionCandidates.ofJobNames(TopLevelItem.class, value, container);
+        if (container instanceof DirectlyModifiableTopLevelItemGroup) {
+            DirectlyModifiableTopLevelItemGroup modifiableContainer = (DirectlyModifiableTopLevelItemGroup) container;
+            Iterator<String> it = candidates.getValues().iterator();
+            while (it.hasNext()) {
+                TopLevelItem item = Jenkins.getInstance().getItem(it.next(), container, TopLevelItem.class);
+                if (item == null) {
+                    continue; // ?
+                }
+                if (!modifiableContainer.canAdd(item)) {
+                    it.remove();
+                }
+            }
+        }
+        return candidates;
+    }
+================================================================================

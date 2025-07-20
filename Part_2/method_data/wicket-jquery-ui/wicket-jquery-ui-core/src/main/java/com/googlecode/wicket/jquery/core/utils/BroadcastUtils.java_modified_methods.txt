@@ -1,0 +1,56 @@
+Method: breadth
+VULNERABLE VERSION:
+
+	public static void breadth(Component component, AjaxPayload payload)
+	{
+		component.send(component, Broadcast.BREADTH, payload);
+	}
+FIXED VERSION:
+
+	public static void breadth(IPartialPageRequestHandler handler, HandlerPayload payload)
+	{
+		BroadcastUtils.breadth((Page) handler.getPage(), payload);
+	}
+================================================================================
+Method: bubble
+VULNERABLE VERSION:
+
+	public static void bubble(Component component, AjaxPayload payload)
+	{
+		component.send(component, Broadcast.BUBBLE, payload);
+	}
+FIXED VERSION:
+
+	public static void bubble(IPartialPageRequestHandler handler, HandlerPayload payload)
+	{
+		BroadcastUtils.bubble((Page) handler.getPage(), payload);
+	}
+================================================================================
+Method: depth
+VULNERABLE VERSION:
+
+	public static void depth(Component component, AjaxPayload payload)
+	{
+		component.send(component, Broadcast.DEPTH, payload);
+	}
+FIXED VERSION:
+
+	public static void depth(IPartialPageRequestHandler handler, HandlerPayload payload)
+	{
+		BroadcastUtils.depth((Page) handler.getPage(), payload);
+	}
+================================================================================
+Method: exact
+VULNERABLE VERSION:
+
+	public static void exact(Component component, AjaxPayload payload)
+	{
+		component.send(component, Broadcast.EXACT, payload);
+	}
+FIXED VERSION:
+
+	public static void exact(IPartialPageRequestHandler handler, HandlerPayload payload)
+	{
+		BroadcastUtils.exact((Page) handler.getPage(), payload);
+	}
+================================================================================

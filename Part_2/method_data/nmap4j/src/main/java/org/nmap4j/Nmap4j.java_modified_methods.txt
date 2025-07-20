@@ -1,0 +1,116 @@
+Method: Nmap4j
+VULNERABLE VERSION:
+
+	public Nmap4j( String path ) {
+		nmapProperties = new NMapProperties( path ) ;
+		flags = new ArgumentProperties() ;
+	}
+FIXED VERSION:
+
+    public Nmap4j(String path) {
+        nmapProperties = new NMapProperties(path);
+        flags = new ArgumentProperties();
+        validator = new HostsInputValidator();
+    }
+================================================================================
+Method: addFlags
+VULNERABLE VERSION:
+
+	public void addFlags( String flagSet ) {
+		StringBuilder sb = new StringBuilder() ;
+		sb.append( flagSet ) ;
+		if( !flagSet.contains( "-oX" ) ) {
+			sb.append( " -oX -" ) ;
+		}
+		flags.addFlag( sb.toString() ) ;
+	}
+FIXED VERSION:
+
+    public void addFlags(String flagSet) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(flagSet);
+        if (!flagSet.contains("-oX")) {
+            sb.append(" -oX -");
+        }
+        flags.addFlag(sb.toString());
+    }
+================================================================================
+Method: includeHosts
+VULNERABLE VERSION:
+
+	public void includeHosts( String hosts )  {
+		flags.addIncludedHost( hosts ) ;
+	}
+FIXED VERSION:
+
+    public void includeHosts(String hosts) {
+        if (!validator.valid(hosts)) {
+            throw new RuntimeException("Non legal hosts parameter");
+        }
+        flags.addIncludedHost(hosts);
+    }
+================================================================================
+Method: excludeHosts
+VULNERABLE VERSION:
+
+	public void excludeHosts( String hosts ) {
+		flags.addExcludedHost( hosts ) ;
+	}
+FIXED VERSION:
+
+    public void excludeHosts(String hosts) {
+        flags.addExcludedHost(hosts);
+    }
+================================================================================
+Method: getOutput
+VULNERABLE VERSION:
+
+	public String getOutput() {
+		return results.getOutput() ;
+	}
+FIXED VERSION:
+
+    public String getOutput() {
+        return results.getOutput();
+    }
+================================================================================
+Method: getResult
+VULNERABLE VERSION:
+
+	public NMapRun getResult() {
+		OnePassParser parser = new OnePassParser() ;
+		NMapRun nmapRun = parser.parse(results.getOutput(), OnePassParser.STRING_INPUT ) ;
+		return nmapRun ;
+	}
+FIXED VERSION:
+
+    public NMapRun getResult() {
+        OnePassParser parser = new OnePassParser();
+        NMapRun nmapRun = parser.parse(results.getOutput(), OnePassParser.STRING_INPUT);
+        return nmapRun;
+    }
+================================================================================
+Method: hasError
+VULNERABLE VERSION:
+
+	public boolean hasError() {
+		return results.getErrors().contains( "ERROR") ;
+	}
+FIXED VERSION:
+
+    public boolean hasError() {
+        return results.getErrors().contains("ERROR");
+    }
+================================================================================
+Method: getExecutionResults
+VULNERABLE VERSION:
+
+	public ExecutionResults getExecutionResults() {
+		return results ;
+	}
+FIXED VERSION:
+
+    public ExecutionResults getExecutionResults() {
+        return results;
+    }
+================================================================================

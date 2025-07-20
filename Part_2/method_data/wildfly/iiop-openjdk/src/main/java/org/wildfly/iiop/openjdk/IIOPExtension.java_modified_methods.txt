@@ -1,0 +1,35 @@
+Method: initialize
+VULNERABLE VERSION:
+
+    public void initialize(ExtensionContext context) {
+        final SubsystemRegistration subsystem = context.registerSubsystem(SUBSYSTEM_NAME, CURRENT_MODEL_VERSION);
+        final ManagementResourceRegistration subsystemRegistration = subsystem.registerSubsystemModel(IIOPRootDefinition.INSTANCE);
+        subsystemRegistration.registerOperationHandler(GenericSubsystemDescribeHandler.DEFINITION, GenericSubsystemDescribeHandler.INSTANCE);
+        subsystem.registerXMLElementWriter(new IIOPSubsystemParser_2_0());
+
+    }
+FIXED VERSION:
+
+    public void initialize(ExtensionContext context) {
+        final SubsystemRegistration subsystem = context.registerSubsystem(SUBSYSTEM_NAME, CURRENT_MODEL_VERSION);
+        final ManagementResourceRegistration subsystemRegistration = subsystem.registerSubsystemModel(IIOPRootDefinition.INSTANCE);
+        subsystemRegistration.registerOperationHandler(GenericSubsystemDescribeHandler.DEFINITION, GenericSubsystemDescribeHandler.INSTANCE);
+        subsystem.registerXMLElementWriter(new IIOPSubsystemParser_2_1());
+
+    }
+================================================================================
+Method: initializeParsers
+VULNERABLE VERSION:
+
+    public void initializeParsers(ExtensionParsingContext context) {
+        context.setSubsystemXmlMapping(SUBSYSTEM_NAME,Namespace.IIOP_OPENJDK_1_0.getUriString(), IIOPSubsystemParser_1::new);
+        context.setSubsystemXmlMapping(SUBSYSTEM_NAME,Namespace.IIOP_OPENJDK_2_0.getUriString(), IIOPSubsystemParser_2_0::new);
+    }
+FIXED VERSION:
+
+    public void initializeParsers(ExtensionParsingContext context) {
+        context.setSubsystemXmlMapping(SUBSYSTEM_NAME,Namespace.IIOP_OPENJDK_1_0.getUriString(), IIOPSubsystemParser_1::new);
+        context.setSubsystemXmlMapping(SUBSYSTEM_NAME,Namespace.IIOP_OPENJDK_2_0.getUriString(), IIOPSubsystemParser_2_0::new);
+        context.setSubsystemXmlMapping(SUBSYSTEM_NAME,Namespace.IIOP_OPENJDK_2_1.getUriString(), IIOPSubsystemParser_2_1::new);
+    }
+================================================================================

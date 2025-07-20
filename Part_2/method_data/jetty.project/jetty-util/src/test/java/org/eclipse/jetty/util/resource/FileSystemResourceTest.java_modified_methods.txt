@@ -1,0 +1,20 @@
+Method: data
+VULNERABLE VERSION:
+
+    public static Collection<Object[]> data() 
+    {
+        List<Object[]> data = new ArrayList<>();
+        data.add(new Class<?>[]{FileResource.class});
+        data.add(new Class<?>[]{PathResource.class});
+        return data;
+    }
+FIXED VERSION:
+
+    public static Collection<Object[]> data()
+    {
+        List<Object[]> data = new ArrayList<>();
+        data.add(new Class<?>[]{FileResource.class});
+        data.add(new Class<?>[]{PathResource.class});
+        return data;
+    }
+================================================================================

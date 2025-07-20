@@ -1,0 +1,29 @@
+Method: evaluateValueFromTarget
+VULNERABLE VERSION:
+ Object evaluateValueFromTarget(Object targetObject, Class<T> entityType) {
+
+		if (!path.endsWith("-")) {
+			return super.evaluateValueFromTarget(targetObject, entityType);
+		}
+
+		String pathSource = Arrays.stream(path.split("/"))//
+				.filter(it -> !it.matches("\\d")) // no digits
+				.filter(it -> !it.equals("-")) // no "last element"s
+				.filter(it -> !it.isEmpty()) //
+				.collect(Collectors.joining("."));
+
+		PropertyPath propertyPath = PropertyPath.from(pathSource, entityType);
+
+		return value instanceof LateObjectEvaluator ? ((LateObjectEvaluator) value).evaluate(propertyPath.getType())
+				: value;
+	}
+FIXED VERSION:
+ Object evaluateValueFromTarget(Object targetObject, Class<T> entityType) {
+
+		if (!path.endsWith("-")) {
+			return super.evaluateValueFromTarget(targetObject, entityType);
+		}
+
+		return evaluate(verifyPath(entityType).<Class<?>> map(it -> it.getType()).orElse(entityType));
+	}
+================================================================================

@@ -1,0 +1,15 @@
+Method: setProcessExternalEntities
+VULNERABLE VERSION:
+
+	public void setProcessExternalEntities(boolean processExternalEntities) {
+		this.processExternalEntities = processExternalEntities;
+	}
+FIXED VERSION:
+
+	public void setProcessExternalEntities(boolean processExternalEntities) {
+		this.processExternalEntities = processExternalEntities;
+		if (processExternalEntities) {
+			setSupportDtd(true);
+		}
+	}
+================================================================================
